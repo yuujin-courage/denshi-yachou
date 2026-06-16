@@ -16,7 +16,7 @@ function applySettings() {
     } else {
       document.body.classList.remove("dark");
     }
-  } catch(e) { console.warn("設定適用失敗:", e); }
+  } catch(e) { console.warn("applySettings error:", e); }
 }
 
 function loadSiteList(filter) {
@@ -56,11 +56,13 @@ function loadSiteList(filter) {
       site.id + "\">" +
       "<div class=\"site-info\">" +
       "<h3>" + esc(site.name) + "</h3>" +
-      "<p>📍 " + esc(site.from) + " → " + esc(site.to) + "</p>" +
-      "<p>📅 " + esc(site.date) + "　👤 " + esc(site.observer) + "</p>" +
-      "<span class=\"badge badge-primary\">" + esc(site.grade) + "</span>" +
+      "<p>" + esc(site.from) + " \u2192 " + esc(site.to) + "</p>" +
+      "<p>" + esc(site.date) +
+      "\u3000" + esc(site.observer) + "</p>" +
+      "<span class=\"badge badge-primary\">" +
+      esc(site.grade) + "</span>" +
       "</div>" +
-      "<div class=\"arrow\">›</div>" +
+      "<div class=\"arrow\">\u203a</div>" +
       "</a>";
   }
   list.innerHTML = html;
@@ -78,14 +80,14 @@ function setupSearch() {
 
 function showLimitAlert() {
   if (document.getElementById("limitAlert")) return;
-  var el      = document.createElement("div");
-  el.id       = "limitAlert";
+  var el       = document.createElement("div");
+  el.id        = "limitAlert";
   el.className = "alert alert-warning";
   el.innerHTML =
-    "⚠️ 現場数が50件に達しました。" +
+    "\u26a0\ufe0f \u73fe\u5834\u6570\u304c50\u4ef6\u306b\u9054\u3057\u307e\u3057\u305f\u3002" +
     "<a href=\"pages/master.html\" " +
     "style=\"color:inherit;font-weight:bold;\">" +
-    "古い現場を削除してください</a>";
+    "\u53e4\u3044\u73fe\u5834\u3092\u524a\u9664\u3057\u3066\u304f\u3060\u3055\u3044</a>";
   var main = document.querySelector(".main-content");
   if (main) main.prepend(el);
 }
