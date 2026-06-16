@@ -2,9 +2,10 @@
 // sw.js - Service Worker（オフライン対応）
 // ══════════════════════════════════════
 
-const CACHE_NAME = 'denshi-yachou-v1';
+const CACHE_NAME = 'denshi-yachou-v2';
 
 // キャッシュするファイル一覧
+// ※ NotoSansJP.b64.js は除外
 const CACHE_FILES = [
   '/',
   '/index.html',
@@ -13,7 +14,6 @@ const CACHE_FILES = [
   '/js/db.js',
   '/js/calc.js',
   '/js/export.js',
-  '/js/NotoSansJP.b64.js',
   '/pages/create.html',
   '/pages/input.html',
   '/pages/check.html',
@@ -27,21 +27,25 @@ const CACHE_FILES = [
 
 // インストール時にキャッシュする
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(CACHE_FILES);
-    })
-  );
   self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(CACHE_FILES))
+      .catch(err => console.warn('キャッシュ失敗:', err))
+  );
 });
 
-// 古いキャッシュを削除する
+// 古いキャッシュを全て削除する
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys.filter(k => k !== CACHE_NAME)
-            .map(k => caches.delete(k))
+        keys.map(k => {
+          if (k !== CACHE_NAME) {
+            console.log('古いキャッシュ削除:', k);
+            return caches.delete(k);
+          }
+        })
       )
     )
   );
@@ -50,17 +54,31 @@ self.addEventListener('activate', event => {
 
 // リクエスト時：キャッシュ優先・なければネット取得
 self.addEventListener('fetch', event => {
+  // Chrome拡張やPostMessageは無視
+  if (!event.request.url.startsWith('http')) return;
+
   event.respondWith(
-    caches.match(event.request).then(cached => {
-      return cached || fetch(event.request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, clone);
+    caches.match(event.request)
+      .then(cached => {
+        if (cached) return cached;
+        return fetch(event.request)
+          .then(response => {
+            // 正常なレスポンスのみキャッシュ
+            if (
+              response &&
+              response.status === 200 &&
+              response.type === 'basic'
+            ) {
+              const clone = response.clone();
+              caches.open(CACHE_NAME)
+                .then(cache => cache.put(event.request, clone));
+            }
+            return response;
+          })
+          .catch(() => {
+            // オフライン時はホーム画面を返す
+            return caches.match('/index.html');
           });
-          return response;
-        })
-        .catch(() => caches.match('/index.html'));
-    })
+      })
   );
 });
