@@ -1,39 +1,43 @@
-const DB = {
+var DB = {
   getSites: function() {
-    try { return JSON.parse(localStorage.getItem("sites") || "[]"); }
-    catch(e) { return []; }
+    try {
+      return JSON.parse(localStorage.getItem("sites") || "[]");
+    } catch(e) { return []; }
   },
   getSite: function(id) {
-    var sites = this.getSites();
-    for (var i = 0; i < sites.length; i++) {
-      if (sites[i].id === id) return sites[i];
+    var list = this.getSites();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) return list[i];
     }
     return null;
   },
   saveSite: function(site) {
-    var sites = this.getSites();
-    var index = -1;
-    for (var i = 0; i < sites.length; i++) {
-      if (sites[i].id === site.id) { index = i; break; }
+    var list  = this.getSites();
+    var found = false;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === site.id) {
+        list[i] = site;
+        found   = true;
+        break;
+      }
     }
-    if (index >= 0) {
-      sites[index] = site;
+    if (found) {
       this.addHistory("編集", site.name, "現場情報を更新しました");
     } else {
-      site.id        = Date.now().toString();
+      site.id        = String(Date.now());
       site.createdAt = new Date().toISOString();
-      sites.unshift(site);
+      list.unshift(site);
       this.addHistory("新規", site.name, "現場を作成しました");
     }
-    localStorage.setItem("sites", JSON.stringify(sites));
+    localStorage.setItem("sites", JSON.stringify(list));
     return site;
   },
   deleteSite: function(id) {
-    var sites   = this.getSites();
+    var list    = this.getSites();
     var site    = this.getSite(id);
     var updated = [];
-    for (var i = 0; i < sites.length; i++) {
-      if (sites[i].id !== id) updated.push(sites[i]);
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id !== id) updated.push(list[i]);
     }
     localStorage.setItem("sites", JSON.stringify(updated));
     if (site) this.addHistory("削除", site.name, "現場を削除しました");
@@ -77,7 +81,7 @@ const DB = {
     try {
       var history = this.getHistory();
       history.unshift({
-        id:     Date.now().toString(),
+        id:     String(Date.now()),
         type:   type,
         target: target,
         detail: detail,
@@ -89,8 +93,8 @@ const DB = {
   },
   getSettings: function() {
     try {
-      var s = localStorage.getItem("settings");
-      if (s) return JSON.parse(s);
+      var saved = localStorage.getItem("settings");
+      if (saved) return JSON.parse(saved);
       return { theme: "light", fontSize: "medium" };
     } catch(e) { return { theme: "light", fontSize: "medium" }; }
   },
