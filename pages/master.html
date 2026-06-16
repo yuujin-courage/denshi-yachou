@@ -245,4 +245,66 @@
     input.value = '';
     showMsg('✅ 「' + val + '」を登録しました', 'success');
     renderList();
-    
+    input.focus();
+  }
+
+  function editItem(index) {
+    var items  = DB.getMaster(currentType);
+    var oldVal = items[index];
+    var newVal = prompt(
+      TAB_LABELS[currentType].label + '名を編集してください',
+      oldVal
+    );
+    if (newVal === null) return;
+    if (!newVal.trim()) {
+      showMsg('⚠️ 名前を入力してください', 'danger');
+      return;
+    }
+    items[index] = newVal.trim();
+    DB.saveMaster(currentType, items);
+    DB.addHistory(
+      '編集',
+      TAB_LABELS[currentType].label + 'マスタ',
+      '「' + oldVal + '」→「' + newVal.trim() + '」に変更しました'
+    );
+    showMsg('✅ 「' + newVal.trim() + '」に変更しました', 'success');
+    renderList();
+  }
+
+  function deleteItem(index) {
+    var items = DB.getMaster(currentType);
+    var val   = items[index];
+    if (!confirm('「' + val + '」を削除しますか？')) return;
+    items.splice(index, 1);
+    DB.saveMaster(currentType, items);
+    DB.addHistory(
+      '削除',
+      TAB_LABELS[currentType].label + 'マスタ',
+      '「' + val + '」を削除しました'
+    );
+    showMsg('✅ 「' + val + '」を削除しました', 'success');
+    renderList();
+  }
+
+  function showMsg(msg, type) {
+    document.getElementById('masterMsg').innerHTML =
+      '<div class="alert alert-' + type + '" ' +
+      'style="margin-bottom:12px;">' + msg + '</div>';
+    setTimeout(function() {
+      var el = document.getElementById('masterMsg');
+      if (el) el.innerHTML = '';
+    }, 3000);
+  }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  </script>
+
+</body>
+</html>
