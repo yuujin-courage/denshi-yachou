@@ -46,10 +46,7 @@
       font-weight: bold;
       color: var(--gray-800);
     }
-    .master-item .item-actions {
-      display: flex;
-      gap: 8px;
-    }
+    .master-item .item-actions { display: flex; gap: 8px; }
     .icon-btn {
       background: none;
       border: 1px solid var(--gray-400);
@@ -97,7 +94,6 @@
 
   <main class="main-content">
 
-    <!-- タブ -->
     <div class="tab-bar" id="tabBar">
       <button class="active"
               onclick="switchTab('instruments', this)">
@@ -117,15 +113,13 @@
       </button>
     </div>
 
-    <!-- 追加フォーム -->
     <div class="add-form">
       <div class="form-section-title" id="addFormTitle">
         🔭 器械を新規登録
       </div>
       <div class="add-form-row">
         <div class="form-group">
-          <input type="text"
-                 id="newItemInput"
+          <input type="text" id="newItemInput"
                  placeholder="例：レベル型式A"
                  maxlength="100">
         </div>
@@ -137,10 +131,8 @@
       </div>
     </div>
 
-    <!-- メッセージ -->
     <div id="masterMsg"></div>
 
-    <!-- 一覧 -->
     <div class="section-label" id="listLabel">
       登録済み 器械 一覧
     </div>
@@ -148,7 +140,6 @@
 
   </main>
 
-  <!-- ボトムナビゲーション -->
   <nav class="bottom-nav">
     <a href="../index.html">
       <span class="icon">🏠</span><span>ホーム</span>
@@ -167,223 +158,91 @@
     </a>
   </nav>
 
-  <!-- ★ db.js を必ず script タグより先に読み込む ★ -->
   <script src="../js/db.js"></script>
   <script>
 
-  // ══════════════════════════════════════
-  // 定数
-  // ══════════════════════════════════════
-  const TAB_LABELS = {
-    instruments: {
-      label:       '器械',
-      icon:        '🔭',
-      placeholder: '例：レベル型式A',
-    },
-    staffs: {
-      label:       '標尺',
-      icon:        '📏',
-      placeholder: '例：3m標尺（No.1）',
-    },
-    observers: {
-      label:       '観測者',
-      icon:        '👤',
-      placeholder: '例：山田 太郎',
-    },
-    weather: {
-      label:       '天候',
-      icon:        '🌤',
-      placeholder: '例：晴',
-    },
-    wind: {
-      label:       '風',
-      icon:        '💨',
-      placeholder: '例：弱風',
-    },
+  var TAB_LABELS = {
+    instruments: { label: '器械',   icon: '🔭', placeholder: '例：レベル型式A' },
+    staffs:      { label: '標尺',   icon: '📏', placeholder: '例：3m標尺（No.1）' },
+    observers:   { label: '観測者', icon: '👤', placeholder: '例：山田 太郎' },
+    weather:     { label: '天候',   icon: '🌤', placeholder: '例：晴' },
+    wind:        { label: '風',     icon: '💨', placeholder: '例：弱風' },
   };
 
-  let currentType = 'instruments';
+  var currentType = 'instruments';
 
-  // ══════════════════════════════════════
-  // 初期化
-  // ══════════════════════════════════════
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addBtn')
       .addEventListener('click', addItem);
-
     document.getElementById('newItemInput')
-      .addEventListener('keydown', e => {
+      .addEventListener('keydown', function(e) {
         if (e.key === 'Enter') addItem();
       });
-
     renderList();
   });
 
-  // ══════════════════════════════════════
-  // タブ切り替え
-  // ══════════════════════════════════════
   function switchTab(type, btn) {
     currentType = type;
-
     document.querySelectorAll('.tab-bar button')
-      .forEach(b => b.classList.remove('active'));
+      .forEach(function(b) { b.classList.remove('active'); });
     btn.classList.add('active');
-
-    const info = TAB_LABELS[type];
+    var info = TAB_LABELS[type];
     document.getElementById('addFormTitle').textContent =
-      `${info.icon} ${info.label}を新規登録`;
+      info.icon + ' ' + info.label + 'を新規登録';
     document.getElementById('newItemInput').placeholder =
       info.placeholder;
     document.getElementById('listLabel').textContent =
-      `登録済み ${info.label} 一覧`;
+      '登録済み ' + info.label + ' 一覧';
     document.getElementById('newItemInput').value = '';
     document.getElementById('masterMsg').innerHTML = '';
-
     renderList();
   }
 
-  // ══════════════════════════════════════
-  // 一覧描画
-  // ══════════════════════════════════════
   function renderList() {
-    const items = DB.getMaster(currentType);
-    const list  = document.getElementById('masterList');
-
+    var items = DB.getMaster(currentType);
+    var list  = document.getElementById('masterList');
     if (items.length === 0) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">📭</div>
-          <p>まだ登録されていません</p>
-          <p>上のフォームから追加してください</p>
-        </div>`;
+      list.innerHTML =
+        '<div class="empty-state">' +
+        '<div class="empty-icon">📭</div>' +
+        '<p>まだ登録されていません</p>' +
+        '<p>上のフォームから追加してください</p>' +
+        '</div>';
       return;
     }
-
-    list.innerHTML = items.map((item, i) => `
-      <div class="master-item">
-        <div class="item-name">${escapeHtml(item)}</div>
-        <div class="item-actions">
-          <button class="icon-btn"
-                  onclick="editItem(${i})">
-            ✏️ 編集
-          </button>
-          <button class="icon-btn danger"
-                  onclick="deleteItem(${i})">
-            🗑 削除
-          </button>
-        </div>
-      </div>
-    `).join('');
+    list.innerHTML = items.map(function(item, i) {
+      return '<div class="master-item">' +
+        '<div class="item-name">' + escapeHtml(item) + '</div>' +
+        '<div class="item-actions">' +
+        '<button class="icon-btn" onclick="editItem(' + i + ')">' +
+        '✏️ 編集</button>' +
+        '<button class="icon-btn danger" onclick="deleteItem(' + i + ')">' +
+        '🗑 削除</button>' +
+        '</div></div>';
+    }).join('');
   }
 
-  // ══════════════════════════════════════
-  // 追加
-  // ══════════════════════════════════════
   function addItem() {
-    const input = document.getElementById('newItemInput');
-    const val   = input.value.trim();
-
+    var input = document.getElementById('newItemInput');
+    var val   = input.value.trim();
     if (!val) {
       showMsg('⚠️ 名前を入力してください', 'danger');
       input.focus();
       return;
     }
-
-    const items = DB.getMaster(currentType);
-
-    if (items.includes(val)) {
+    var items = DB.getMaster(currentType);
+    if (items.indexOf(val) !== -1) {
       showMsg('⚠️ 同じ名前がすでに登録されています', 'warning');
       return;
     }
-
     items.push(val);
     DB.saveMaster(currentType, items);
     DB.addHistory(
       '新規',
       TAB_LABELS[currentType].label + 'マスタ',
-      `「${val}」を登録しました`
+      '「' + val + '」を登録しました'
     );
-
     input.value = '';
-    showMsg(`✅ 「${val}」を登録しました`, 'success');
+    showMsg('✅ 「' + val + '」を登録しました', 'success');
     renderList();
-    input.focus();
-  }
-
-  // ══════════════════════════════════════
-  // 編集
-  // ══════════════════════════════════════
-  function editItem(index) {
-    const items  = DB.getMaster(currentType);
-    const oldVal = items[index];
-    const newVal = prompt(
-      `${TAB_LABELS[currentType].label}名を編集してください`,
-      oldVal
-    );
-
-    if (newVal === null) return;
-    if (!newVal.trim()) {
-      showMsg('⚠️ 名前を入力してください', 'danger');
-      return;
-    }
-
-    items[index] = newVal.trim();
-    DB.saveMaster(currentType, items);
-    DB.addHistory(
-      '編集',
-      TAB_LABELS[currentType].label + 'マスタ',
-      `「${oldVal}」→「${newVal.trim()}」に変更しました`
-    );
-
-    showMsg(`✅ 「${newVal.trim()}」に変更しました`, 'success');
-    renderList();
-  }
-
-  // ══════════════════════════════════════
-  // 削除
-  // ══════════════════════════════════════
-  function deleteItem(index) {
-    const items = DB.getMaster(currentType);
-    const val   = items[index];
-
-    if (!confirm(`「${val}」を削除しますか？`)) return;
-
-    items.splice(index, 1);
-    DB.saveMaster(currentType, items);
-    DB.addHistory(
-      '削除',
-      TAB_LABELS[currentType].label + 'マスタ',
-      `「${val}」を削除しました`
-    );
-
-    showMsg(`✅ 「${val}」を削除しました`, 'success');
-    renderList();
-  }
-
-  // ══════════════════════════════════════
-  // ヘルパー
-  // ══════════════════════════════════════
-  function showMsg(msg, type) {
-    document.getElementById('masterMsg').innerHTML = `
-      <div class="alert alert-${type}"
-           style="margin-bottom:12px;">
-        ${msg}
-      </div>`;
-    setTimeout(() => {
-      const el = document.getElementById('masterMsg');
-      if (el) el.innerHTML = '';
-    }, 3000);
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  </script>
-
-</body>
-</html>
+    

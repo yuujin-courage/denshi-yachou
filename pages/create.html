@@ -8,52 +8,49 @@
 </head>
 <body>
 
-  <!-- ヘッダー -->
   <header class="app-header">
     <div>
       <h1>📋 現場作成・編集</h1>
       <div class="header-sub" id="headerSub">新規現場を作成します</div>
     </div>
-    <a href="../index.html" style="color:white;font-size:1.5rem;text-decoration:none;">✕</a>
+    <a href="../index.html"
+       style="color:white;font-size:1.5rem;text-decoration:none;">✕</a>
   </header>
 
   <main class="main-content">
 
-    <!-- 基本情報 -->
     <div class="form-section">
       <div class="form-section-title">📋 基本情報</div>
-
       <div class="form-group">
         <label>工事名 <span style="color:var(--danger)">*</span></label>
-        <input type="text" id="siteName" placeholder="例：〇〇国道改良工事" maxlength="100">
+        <input type="text" id="siteName"
+               placeholder="例：〇〇国道改良工事" maxlength="100">
       </div>
-
       <div class="form-group">
         <label>路線名</label>
-        <input type="text" id="route" placeholder="例：〇〇線" maxlength="100">
+        <input type="text" id="route"
+               placeholder="例：〇〇線" maxlength="100">
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>自（標石） <span style="color:var(--danger)">*</span></label>
-          <input type="text" id="fromPoint" placeholder="例：BM.1" maxlength="50">
+          <input type="text" id="fromPoint"
+                 placeholder="例：BM.1" maxlength="50">
         </div>
         <div class="form-group">
           <label>至（標石） <span style="color:var(--danger)">*</span></label>
-          <input type="text" id="toPoint" placeholder="例：BM.5" maxlength="50">
+          <input type="text" id="toPoint"
+                 placeholder="例：BM.5" maxlength="50">
         </div>
       </div>
     </div>
 
-    <!-- 日時・環境 -->
     <div class="form-section">
       <div class="form-section-title">📅 日時・環境</div>
-
       <div class="form-group">
         <label>日付 <span style="color:var(--danger)">*</span></label>
         <input type="date" id="siteDate">
       </div>
-
       <div class="form-row">
         <div class="form-group">
           <label>天候 <span style="color:var(--danger)">*</span></label>
@@ -66,58 +63,56 @@
       </div>
     </div>
 
-    <!-- 機器・担当者 -->
     <div class="form-section">
       <div class="form-section-title">🔧 機器・担当者</div>
-
       <div class="form-group">
         <label>器械 <span style="color:var(--danger)">*</span></label>
         <select id="instrument"></select>
       </div>
-
       <div class="form-group">
         <label>標尺 <span style="color:var(--danger)">*</span></label>
         <select id="staff"></select>
       </div>
-
       <div class="form-group">
         <label>観測者 <span style="color:var(--danger)">*</span></label>
         <select id="observer"></select>
       </div>
     </div>
 
-    <!-- 測量等級 -->
     <div class="form-section">
       <div class="form-section-title">📐 測量等級</div>
       <div class="form-group">
         <label>等級 <span style="color:var(--danger)">*</span></label>
         <select id="grade">
-          <option value="1級水準測量">1級水準測量（許容誤差 ±2.5√S mm）</option>
-          <option value="2級水準測量">2級水準測量（許容誤差 ±5√S mm）</option>
-          <option value="3級水準測量" selected>3級水準測量（許容誤差 ±10√S mm）</option>
-          <option value="4級水準測量">4級水準測量（許容誤差 ±20√S mm）</option>
-          <option value="簡易水準測量">簡易水準測量（許容誤差 ±40√S mm）</option>
+          <option value="1級水準測量">1級水準測量（±2.5√S mm）</option>
+          <option value="2級水準測量">2級水準測量（±5√S mm）</option>
+          <option value="3級水準測量" selected>3級水準測量（±10√S mm）</option>
+          <option value="4級水準測量">4級水準測量（±20√S mm）</option>
+          <option value="簡易水準測量">簡易水準測量（±40√S mm）</option>
         </select>
       </div>
     </div>
 
-    <!-- 基準高 -->
     <div class="form-section">
       <div class="form-section-title">📏 基準高（BM高）</div>
       <div class="form-group">
-        <label>出発点の既知高さ（m）<span style="color:var(--danger)">*</span></label>
-        <input type="number" id="bmHeight" placeholder="例：10.000"
+        <label>出発点の既知高さ（m）
+          <span style="color:var(--danger)">*</span>
+        </label>
+        <input type="number" id="bmHeight"
+               placeholder="例：10.000"
                step="0.001" inputmode="decimal">
       </div>
     </div>
 
-    <!-- エラーメッセージ -->
-    <div id="errorMsg" class="alert alert-danger" style="display:none;"></div>
+    <div id="errorMsg" class="alert alert-danger"
+         style="display:none;"></div>
 
-    <!-- ボタン -->
     <div class="form-row" style="margin-top:8px;">
-      <a href="../index.html" class="btn btn-gray btn-full">キャンセル</a>
-      <button class="btn btn-success btn-full btn-lg" onclick="saveSite()">
+      <a href="../index.html"
+         class="btn btn-gray btn-full">キャンセル</a>
+      <button class="btn btn-success btn-full btn-lg"
+              id="saveBtn">
         保存して入力へ ›
       </button>
     </div>
@@ -126,70 +121,64 @@
 
   <script src="../js/db.js"></script>
   <script>
-  // ══════════════════════════════════════
-  // 初期化
-  // ══════════════════════════════════════
-  document.addEventListener('DOMContentLoaded', () => {
-    // 今日の日付をセット
+
+  var editId = null;
+
+  document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('siteDate').value =
       new Date().toISOString().split('T')[0];
 
-    // マスタからセレクトボックスを生成
     fillSelect('weather',    DB.getMaster('weather'));
     fillSelect('wind',       DB.getMaster('wind'));
     fillSelect('instrument', DB.getMaster('instruments'));
     fillSelect('staff',      DB.getMaster('staffs'));
     fillSelect('observer',   DB.getMaster('observers'));
 
-    // 編集モードの場合はデータを読み込む
-    const params = new URLSearchParams(location.search);
-    const id     = params.get('id');
+    var params = new URLSearchParams(location.search);
+    var id     = params.get('id');
     if (id) {
-      const site = DB.getSite(id);
+      var site = DB.getSite(id);
       if (site) loadSiteData(site);
     }
+
+    document.getElementById('saveBtn')
+      .addEventListener('click', saveSite);
   });
 
-  // セレクトボックスにマスタデータを入れる
   function fillSelect(id, items) {
-    const sel = document.getElementById(id);
-    sel.innerHTML = items.map(i =>
-      `<option value="${i}">${i}</option>`
-    ).join('');
+    var sel = document.getElementById(id);
+    sel.innerHTML = items.map(function(i) {
+      return '<option value="' + escapeHtml(i) + '">' +
+             escapeHtml(i) + '</option>';
+    }).join('');
   }
 
-  // 編集時にデータを読み込む
   function loadSiteData(site) {
-    document.getElementById('headerSub').textContent = '現場情報を編集します';
-    document.getElementById('siteName').value    = site.name    || '';
-    document.getElementById('route').value       = site.route   || '';
-    document.getElementById('fromPoint').value   = site.from    || '';
-    document.getElementById('toPoint').value     = site.to      || '';
-    document.getElementById('siteDate').value    = site.date    || '';
-    document.getElementById('weather').value     = site.weather || '';
-    document.getElementById('wind').value        = site.wind    || '';
-    document.getElementById('instrument').value  = site.instrument || '';
-    document.getElementById('staff').value       = site.staff   || '';
-    document.getElementById('observer').value    = site.observer|| '';
-    document.getElementById('grade').value       = site.grade   || '3級水準測量';
-    document.getElementById('bmHeight').value    = site.bmHeight|| '';
-    // 編集中のIDを保持
-    document.querySelector('button').setAttribute('data-id', site.id);
+    editId = site.id;
+    document.getElementById('headerSub').textContent =
+      '現場情報を編集します';
+    document.getElementById('siteName').value   = site.name    || '';
+    document.getElementById('route').value      = site.route   || '';
+    document.getElementById('fromPoint').value  = site.from    || '';
+    document.getElementById('toPoint').value    = site.to      || '';
+    document.getElementById('siteDate').value   = site.date    || '';
+    document.getElementById('weather').value    = site.weather || '';
+    document.getElementById('wind').value       = site.wind    || '';
+    document.getElementById('instrument').value = site.instrument || '';
+    document.getElementById('staff').value      = site.staff   || '';
+    document.getElementById('observer').value   = site.observer|| '';
+    document.getElementById('grade').value      = site.grade   || '3級水準測量';
+    document.getElementById('bmHeight').value   = site.bmHeight|| '';
   }
 
-  // ══════════════════════════════════════
-  // 保存処理
-  // ══════════════════════════════════════
   function saveSite() {
-    const name      = document.getElementById('siteName').value.trim();
-    const from      = document.getElementById('fromPoint').value.trim();
-    const to        = document.getElementById('toPoint').value.trim();
-    const date      = document.getElementById('siteDate').value;
-    const weather   = document.getElementById('weather').value;
-    const bmHeight  = document.getElementById('bmHeight').value;
-    const errorMsg  = document.getElementById('errorMsg');
+    var name     = document.getElementById('siteName').value.trim();
+    var from     = document.getElementById('fromPoint').value.trim();
+    var to       = document.getElementById('toPoint').value.trim();
+    var date     = document.getElementById('siteDate').value;
+    var bmHeight = document.getElementById('bmHeight').value;
+    var errorMsg = document.getElementById('errorMsg');
 
-    // バリデーション
     if (!name) {
       showError('工事名を入力してください。'); return;
     }
@@ -205,16 +194,14 @@
 
     errorMsg.style.display = 'none';
 
-    // データ組み立て
-    const btn  = document.querySelector('button[data-id]');
-    const site = {
-      id:         btn ? btn.getAttribute('data-id') : null,
-      name,
+    var site = {
+      id:         editId,
+      name:       name,
       route:      document.getElementById('route').value.trim(),
-      from,
-      to,
-      date,
-      weather,
+      from:       from,
+      to:         to,
+      date:       date,
+      weather:    document.getElementById('weather').value,
       wind:       document.getElementById('wind').value,
       instrument: document.getElementById('instrument').value,
       staff:      document.getElementById('staff').value,
@@ -223,18 +210,25 @@
       bmHeight:   parseFloat(bmHeight),
     };
 
-    const saved = DB.saveSite(site);
-
-    // 保存後にデータ入力画面へ遷移
-    location.href = `input.html?id=${saved.id}`;
+    var saved = DB.saveSite(site);
+    location.href = 'input.html?id=' + saved.id;
   }
 
   function showError(msg) {
-    const el = document.getElementById('errorMsg');
-    el.textContent = '⚠️ ' + msg;
-    el.style.display = 'flex';
+    var el = document.getElementById('errorMsg');
+    el.textContent    = '⚠️ ' + msg;
+    el.style.display  = 'flex';
     el.scrollIntoView({ behavior: 'smooth' });
   }
+
+  function escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   </script>
 
 </body>
