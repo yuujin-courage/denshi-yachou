@@ -1,0 +1,7 @@
+# フォントファイル（大きすぎるため除外）
+js/NotoSansJP.b64.js
+NotoSansJP.ttf
+
+# システムファイル
+.DS_Store
+Thumbs.db

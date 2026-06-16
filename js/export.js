@@ -65,7 +65,7 @@ const EXPORT = {
       `水準測量手簿_${site.name}_${site.date}.xlsx`);
   },
 
-  // ── PDF出力（水準測量手簿様式・日本語対応） ──
+  // ── PDF出力（水準測量手簿様式） ────
   toPDF(site, measurements) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({
@@ -73,11 +73,6 @@ const EXPORT = {
       unit: 'mm',
       format: 'a4',
     });
-
-    // ── 日本語フォント埋め込み（游明朝） ──
-    doc.addFileToVFS('YuMincho.ttf', NOTO_SANS_JP);
-    doc.addFont('YuMincho.ttf', 'YuMincho', 'normal');
-    doc.setFont('YuMincho', 'normal');
 
     const computed = CALC.compute(measurements, site.bmHeight);
     const check    = CALC.check(computed);
@@ -89,75 +84,82 @@ const EXPORT = {
     const black  = [0, 0, 0];
     const white  = [255, 255, 255];
 
+    // ── フォント設定 ──
+    doc.setFont('helvetica', 'normal');
+
     // ══════════════════════════
     // タイトル
     // ══════════════════════════
-    doc.setFont('YuMincho', 'normal');
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.setTextColor(...orange);
-    doc.text('水 準 測 量 手 簿',
+    doc.text('Water Level Survey Field Book',
              pageW / 2, 16, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text('- Leveling Field Notes -',
+             pageW / 2, 23, { align: 'center' });
 
     // ══════════════════════════
     // ヘッダー情報
     // ══════════════════════════
-    doc.setFont('YuMincho', 'normal');
-    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
     doc.setTextColor(...black);
 
     // 自〜至
-    doc.text('自　　標石', left, 26);
-    doc.setFont('YuMincho', 'normal');
-    doc.text(site.from || '', left + 20, 26);
+    doc.text('From:', left, 32);
+    doc.setFont('helvetica', 'bold');
+    doc.text(site.from || '', left + 14, 32);
+    doc.setFont('helvetica', 'normal');
     doc.setDrawColor(...orange);
     doc.setLineWidth(0.4);
-    doc.line(left + 18, 26.5, left + 65, 26.5);
+    doc.line(left + 13, 32.5, left + 70, 32.5);
 
-    doc.text('至　　標石', left + 80, 26);
-    doc.text(site.to || '', left + 100, 26);
-    doc.line(left + 98, 26.5, left + 145, 26.5);
+    doc.text('To:', left + 80, 32);
+    doc.setFont('helvetica', 'bold');
+    doc.text(site.to || '', left + 90, 32);
+    doc.setFont('helvetica', 'normal');
+    doc.line(left + 89, 32.5, left + 150, 32.5);
 
     // 日付・天候・風
-    const mo = (site.date || '').substring(5, 7);
-    const dy = (site.date || '').substring(8, 10);
-    doc.text(
-      `　　　年　${mo}月　${dy}日`,
-      left, 34
-    );
-    doc.text(`天候　${site.weather || ''}`, left + 60, 34);
-    doc.text(`風　${site.wind || ''}`, left + 100, 34);
+    const dateStr = (site.date || '').replace(/-/g, '/');
+    doc.text(`Date: ${dateStr}`, left, 39);
+    doc.text(`Weather: ${site.weather || ''}`, left + 55, 39);
+    doc.text(`Wind: ${site.wind || ''}`, left + 115, 39);
 
-    // 器械・標尺・観測者（右上）
-    doc.text(`器　械　${site.instrument || ''}`, left + 130, 26);
-    doc.text(`標　尺　${site.staff || ''}`,      left + 130, 31);
-    doc.text(`観測者　${site.observer || ''}`,   left + 130, 36);
+    // 器械・標尺・観測者
+    doc.text(`Instrument: ${site.instrument || ''}`, left, 45);
+    doc.text(`Staff: ${site.staff || ''}`, left + 75, 45);
+    doc.text(`Observer: ${site.observer || ''}`, left + 130, 45);
 
-    // 工事名・等級
+    // 等級・BM高
+    doc.text(`Grade: ${site.grade || ''}`, left, 51);
+    doc.text(`BM Elev.: ${site.bmHeight} m`, left + 75, 51);
+
+    // 工事名
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.text(`工事名：${site.name || ''}`, left, 42);
-    doc.setFontSize(8);
-    doc.text(`路線名：${site.route || ''}`, left + 95, 42);
-    doc.text(
-      `等級：${site.grade || ''}　BM高：${site.bmHeight} m`,
-      left + 130, 42
-    );
+    doc.text(`Project: ${site.name || ''}`, left, 57);
+    if (site.route) {
+      doc.text(`Route: ${site.route}`, left + 120, 57);
+    }
 
     // 区切り線
     doc.setDrawColor(...orange);
-    doc.setLineWidth(0.5);
-    doc.line(left, 45, right, 45);
+    doc.setLineWidth(0.6);
+    doc.line(left, 60, right, 60);
 
     // ══════════════════════════
     // テーブル（手簿様式）
     // ══════════════════════════
     const headers = [[
-      '番　号',
-      '距　離\n(m)',
-      '後　視\n(m)',
-      '前　視\n(m)',
-      '高低差(+)\n(m)',
-      '高低差(-)\n(m)',
-      '備　考',
+      'No.',
+      'Dist.\n(m)',
+      'BS\n(m)',
+      'FS\n(m)',
+      'Diff(+)\n(m)',
+      'Diff(-)\n(m)',
+      'Note',
     ]];
 
     const body = computed.map(row => {
@@ -178,7 +180,7 @@ const EXPORT = {
 
     // 和行
     body.push([
-      '和', '',
+      'SUM', '',
       CALC.fmt(check.sumBS),
       CALC.fmt(check.sumFS),
       CALC.fmt(check.sumPlus),
@@ -186,19 +188,19 @@ const EXPORT = {
       '',
     ]);
 
-    // 点検結果行
+    // 点検行
     body.push([
-      '点検結果', '', '', '',
-      { content: check.isOK ? 'OK' : '不一致', colSpan: 2 },
-      `差=${CALC.fmt(check.diffBSFS)}`,
+      'Check', '', '', '',
+      { content: check.isOK ? 'OK' : 'NG', colSpan: 2 },
+      `Diff=${CALC.fmt(check.diffBSFS)}`,
     ]);
 
     doc.autoTable({
       head: headers,
       body: body,
-      startY: 47,
+      startY: 62,
       styles: {
-        font:        'YuMincho',
+        font:        'helvetica',
         fontStyle:   'normal',
         fontSize:    8.5,
         halign:      'center',
@@ -209,8 +211,8 @@ const EXPORT = {
         textColor:   black,
       },
       headStyles: {
-        font:       'YuMincho',
-        fontStyle:  'normal',
+        font:       'helvetica',
+        fontStyle:  'bold',
         fillColor:  orange,
         textColor:  white,
         fontSize:   8.5,
@@ -224,15 +226,15 @@ const EXPORT = {
         const sumIdx = body.length - 2;
         const chkIdx = body.length - 1;
         if (data.row.index === sumIdx) {
-          data.cell.styles.fillColor  = [253, 245, 230];
-          data.cell.styles.fontStyle  = 'normal';
-          data.cell.styles.textColor  = orange;
+          data.cell.styles.fillColor = [253, 245, 230];
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.textColor = orange;
         }
         if (data.row.index === chkIdx) {
           data.cell.styles.fillColor = check.isOK
             ? [213, 245, 227] : [253, 220, 215];
-          data.cell.styles.fontStyle  = 'normal';
-          data.cell.styles.textColor  = check.isOK
+          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.textColor = check.isOK
             ? [30, 132, 73] : [146, 43, 33];
         }
       },
@@ -258,30 +260,31 @@ const EXPORT = {
     doc.setLineWidth(0.3);
     doc.line(left, finalY, right, finalY);
 
-    doc.setFont('YuMincho', 'normal');
+    doc.setFont('helvetica', 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(...black);
     doc.text(
-      `点検：ΣBS=${CALC.fmt(check.sumBS)}　` +
-      `ΣFS=${CALC.fmt(check.sumFS)}　` +
-      `差=${CALC.fmt(check.diffBSFS)}　` +
-      `Σ(+)=${CALC.fmt(check.sumPlus)}　` +
-      `Σ(-)=${CALC.fmt(check.sumMinus)}　` +
-      `結果：${check.isOK ? 'OK' : '不一致'}`,
+      `Check: SBS=${CALC.fmt(check.sumBS)}  ` +
+      `SFS=${CALC.fmt(check.sumFS)}  ` +
+      `Diff=${CALC.fmt(check.diffBSFS)}  ` +
+      `S(+)=${CALC.fmt(check.sumPlus)}  ` +
+      `S(-)=${CALC.fmt(check.sumMinus)}  ` +
+      `Result: ${check.isOK ? 'OK' : 'NG'}`,
       left, finalY + 5
     );
 
     const tolK = CALC.TOLERANCE[site.grade] || 10;
     doc.text(
-      `等級：${site.grade}　` +
-      `許容誤差：±${tolK}√S mm（S=路線長km）`,
+      `Grade: ${site.grade}  ` +
+      `Tolerance: +/-${tolK}*sqrt(S) mm  ` +
+      `(S = Route Length km)`,
       left, finalY + 10
     );
 
     doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);
     doc.text(
-      `電子野帳システム　出力日時：` +
+      `Denshi-Yachou System  ` +
       `${new Date().toLocaleString('ja-JP')}`,
       pageW / 2, 290, { align: 'center' }
     );

@@ -61,8 +61,6 @@
   <!-- PDF出力ライブラリ（jsPDF + autoTable） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <!-- 日本語フォント（Base64） -->
-  <script src="../js/NotoSansJP.b64.js"></script>
 </head>
 <body>
 
@@ -109,7 +107,7 @@
       <div class="icon">📄</div>
       <div class="info">
         <h3>PDF 出力（.pdf）</h3>
-        <p>水準測量手簿レイアウトで出力<br>印刷・提出用（日本語対応）</p>
+        <p>水準測量手簿レイアウトで出力<br>印刷・提出用</p>
       </div>
       <button class="btn btn-danger"
               onclick="doExport('pdf')">出力</button>
@@ -186,9 +184,7 @@
     `;
   });
 
-  // ══════════════════════════════════════
   // 出力実行
-  // ══════════════════════════════════════
   function doExport(type) {
     const msg     = document.getElementById('exportMsg');
     const overlay = document.getElementById('loadingOverlay');
@@ -196,13 +192,11 @@
 
     msg.innerHTML = '';
 
-    // PDF は生成に時間がかかるのでローディング表示
     if (type === 'pdf') {
       loading.textContent = 'PDF生成中...しばらくお待ちください';
       overlay.classList.add('show');
     }
 
-    // 少し待ってから実行（UIが更新されるのを待つ）
     setTimeout(() => {
       try {
         if (type === 'excel') EXPORT.toExcel(site, measurements);
@@ -211,7 +205,8 @@
 
         overlay.classList.remove('show');
         msg.innerHTML = `
-          <div class="alert alert-success" style="margin-top:12px;">
+          <div class="alert alert-success"
+               style="margin-top:12px;">
             ✅ 出力完了！ダウンロードフォルダをご確認ください。
           </div>`;
         DB.addHistory(
@@ -221,7 +216,8 @@
       } catch(e) {
         overlay.classList.remove('show');
         msg.innerHTML = `
-          <div class="alert alert-danger" style="margin-top:12px;">
+          <div class="alert alert-danger"
+               style="margin-top:12px;">
             ⚠️ 出力に失敗しました<br>
             <small>${e.message}</small>
           </div>`;
