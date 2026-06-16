@@ -70,12 +70,16 @@
       padding: 14px;
       margin-bottom: 16px;
     }
-    .add-form .form-row {
+    .add-form-row {
       display: flex;
       gap: 10px;
       align-items: flex-end;
+      margin-top: 10px;
     }
-    .add-form .form-group { flex: 1; margin-bottom: 0; }
+    .add-form-row .form-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
   </style>
 </head>
 <body>
@@ -95,11 +99,22 @@
 
     <!-- タブ -->
     <div class="tab-bar" id="tabBar">
-      <button class="active" onclick="switchTab('instruments', this)">🔭 器械</button>
-      <button onclick="switchTab('staffs', this)">📏 標尺</button>
-      <button onclick="switchTab('observers', this)">👤 観測者</button>
-      <button onclick="switchTab('weather', this)">🌤 天候</button>
-      <button onclick="switchTab('wind', this)">💨 風</button>
+      <button class="active"
+              onclick="switchTab('instruments', this)">
+        🔭 器械
+      </button>
+      <button onclick="switchTab('staffs', this)">
+        📏 標尺
+      </button>
+      <button onclick="switchTab('observers', this)">
+        👤 観測者
+      </button>
+      <button onclick="switchTab('weather', this)">
+        🌤 天候
+      </button>
+      <button onclick="switchTab('wind', this)">
+        💨 風
+      </button>
     </div>
 
     <!-- 追加フォーム -->
@@ -107,14 +122,15 @@
       <div class="form-section-title" id="addFormTitle">
         🔭 器械を新規登録
       </div>
-      <div class="form-row" style="margin-top:10px;">
+      <div class="add-form-row">
         <div class="form-group">
-          <input type="text" id="newItemInput"
+          <input type="text"
+                 id="newItemInput"
                  placeholder="例：レベル型式A"
                  maxlength="100">
         </div>
         <button class="btn btn-primary"
-                onclick="addItem()"
+                id="addBtn"
                 style="white-space:nowrap;">
           ＋ 追加
         </button>
@@ -125,7 +141,9 @@
     <div id="masterMsg"></div>
 
     <!-- 一覧 -->
-    <div class="section-label" id="listLabel">登録済み 器械 一覧</div>
+    <div class="section-label" id="listLabel">
+      登録済み 器械 一覧
+    </div>
     <div id="masterList"></div>
 
   </main>
@@ -149,25 +167,64 @@
     </a>
   </nav>
 
+  <!-- ★ db.js を必ず script タグより先に読み込む ★ -->
   <script src="../js/db.js"></script>
   <script>
+
+  // ══════════════════════════════════════
+  // 定数
+  // ══════════════════════════════════════
   const TAB_LABELS = {
-    instruments: { label: '器械',   icon: '🔭', placeholder: '例：レベル型式A' },
-    staffs:      { label: '標尺',   icon: '📏', placeholder: '例：3m標尺（No.1）' },
-    observers:   { label: '観測者', icon: '👤', placeholder: '例：山田 太郎' },
-    weather:     { label: '天候',   icon: '🌤', placeholder: '例：晴' },
-    wind:        { label: '風',     icon: '💨', placeholder: '例：弱風' },
+    instruments: {
+      label:       '器械',
+      icon:        '🔭',
+      placeholder: '例：レベル型式A',
+    },
+    staffs: {
+      label:       '標尺',
+      icon:        '📏',
+      placeholder: '例：3m標尺（No.1）',
+    },
+    observers: {
+      label:       '観測者',
+      icon:        '👤',
+      placeholder: '例：山田 太郎',
+    },
+    weather: {
+      label:       '天候',
+      icon:        '🌤',
+      placeholder: '例：晴',
+    },
+    wind: {
+      label:       '風',
+      icon:        '💨',
+      placeholder: '例：弱風',
+    },
   };
 
   let currentType = 'instruments';
 
+  // ══════════════════════════════════════
+  // 初期化
+  // ══════════════════════════════════════
   document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('addBtn')
+      .addEventListener('click', addItem);
+
+    document.getElementById('newItemInput')
+      .addEventListener('keydown', e => {
+        if (e.key === 'Enter') addItem();
+      });
+
     renderList();
   });
 
+  // ══════════════════════════════════════
   // タブ切り替え
+  // ══════════════════════════════════════
   function switchTab(type, btn) {
     currentType = type;
+
     document.querySelectorAll('.tab-bar button')
       .forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
@@ -185,7 +242,9 @@
     renderList();
   }
 
+  // ══════════════════════════════════════
   // 一覧描画
+  // ══════════════════════════════════════
   function renderList() {
     const items = DB.getMaster(currentType);
     const list  = document.getElementById('masterList');
@@ -195,43 +254,45 @@
         <div class="empty-state">
           <div class="empty-icon">📭</div>
           <p>まだ登録されていません</p>
+          <p>上のフォームから追加してください</p>
         </div>`;
       return;
     }
 
     list.innerHTML = items.map((item, i) => `
       <div class="master-item">
-        <div class="item-name">${item}</div>
+        <div class="item-name">${escapeHtml(item)}</div>
         <div class="item-actions">
           <button class="icon-btn"
-                  onclick="editItem(${i})">✏️ 編集</button>
+                  onclick="editItem(${i})">
+            ✏️ 編集
+          </button>
           <button class="icon-btn danger"
-                  onclick="deleteItem(${i})">🗑 削除</button>
+                  onclick="deleteItem(${i})">
+            🗑 削除
+          </button>
         </div>
       </div>
     `).join('');
   }
 
+  // ══════════════════════════════════════
   // 追加
+  // ══════════════════════════════════════
   function addItem() {
     const input = document.getElementById('newItemInput');
     const val   = input.value.trim();
-    const msg   = document.getElementById('masterMsg');
 
     if (!val) {
-      msg.innerHTML = `
-        <div class="alert alert-danger">
-          ⚠️ 名前を入力してください
-        </div>`;
+      showMsg('⚠️ 名前を入力してください', 'danger');
+      input.focus();
       return;
     }
 
     const items = DB.getMaster(currentType);
+
     if (items.includes(val)) {
-      msg.innerHTML = `
-        <div class="alert alert-warning">
-          ⚠️ 同じ名前がすでに登録されています
-        </div>`;
+      showMsg('⚠️ 同じ名前がすでに登録されています', 'warning');
       return;
     }
 
@@ -242,15 +303,16 @@
       TAB_LABELS[currentType].label + 'マスタ',
       `「${val}」を登録しました`
     );
+
     input.value = '';
-    msg.innerHTML = `
-      <div class="alert alert-success">
-        ✅ 「${val}」を登録しました
-      </div>`;
+    showMsg(`✅ 「${val}」を登録しました`, 'success');
     renderList();
+    input.focus();
   }
 
+  // ══════════════════════════════════════
   // 編集
+  // ══════════════════════════════════════
   function editItem(index) {
     const items  = DB.getMaster(currentType);
     const oldVal = items[index];
@@ -258,7 +320,13 @@
       `${TAB_LABELS[currentType].label}名を編集してください`,
       oldVal
     );
-    if (!newVal || newVal.trim() === '') return;
+
+    if (newVal === null) return;
+    if (!newVal.trim()) {
+      showMsg('⚠️ 名前を入力してください', 'danger');
+      return;
+    }
+
     items[index] = newVal.trim();
     DB.saveMaster(currentType, items);
     DB.addHistory(
@@ -266,18 +334,20 @@
       TAB_LABELS[currentType].label + 'マスタ',
       `「${oldVal}」→「${newVal.trim()}」に変更しました`
     );
-    document.getElementById('masterMsg').innerHTML = `
-      <div class="alert alert-success">
-        ✅ 「${newVal.trim()}」に変更しました
-      </div>`;
+
+    showMsg(`✅ 「${newVal.trim()}」に変更しました`, 'success');
     renderList();
   }
 
+  // ══════════════════════════════════════
   // 削除
+  // ══════════════════════════════════════
   function deleteItem(index) {
     const items = DB.getMaster(currentType);
     const val   = items[index];
+
     if (!confirm(`「${val}」を削除しますか？`)) return;
+
     items.splice(index, 1);
     DB.saveMaster(currentType, items);
     DB.addHistory(
@@ -285,12 +355,34 @@
       TAB_LABELS[currentType].label + 'マスタ',
       `「${val}」を削除しました`
     );
-    document.getElementById('masterMsg').innerHTML = `
-      <div class="alert alert-success">
-        ✅ 「${val}」を削除しました
-      </div>`;
+
+    showMsg(`✅ 「${val}」を削除しました`, 'success');
     renderList();
   }
+
+  // ══════════════════════════════════════
+  // ヘルパー
+  // ══════════════════════════════════════
+  function showMsg(msg, type) {
+    document.getElementById('masterMsg').innerHTML = `
+      <div class="alert alert-${type}"
+           style="margin-bottom:12px;">
+        ${msg}
+      </div>`;
+    setTimeout(() => {
+      const el = document.getElementById('masterMsg');
+      if (el) el.innerHTML = '';
+    }, 3000);
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   </script>
 
 </body>
