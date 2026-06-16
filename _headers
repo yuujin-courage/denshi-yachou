@@ -1,18 +1,4 @@
-/js/db.js
-  Cache-Control: no-store, no-cache, must-revalidate
-  Pragma: no-cache
-
-/js/app.js
-  Cache-Control: no-store, no-cache, must-revalidate
-
-/js/calc.js
-  Cache-Control: no-store, no-cache, must-revalidate
-
-/js/export.js
-  Cache-Control: no-store, no-cache, must-revalidate
-
-/pages/*
-  Cache-Control: no-store, no-cache, must-revalidate
-
 /*
-  Cache-Control: no-store, no-cache, must-revalidate
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
