@@ -1,6 +1,9 @@
-// SW無効化（空ファイル）
-// Cloudflare Pages対応のためService Workerを使用しない
-self.addEventListener('install', () => self.skipWaiting());
+const CACHE_NAME = 'denshi-yachou-v5';
+
+self.addEventListener('install', () => {
+  self.skipWaiting();
+});
+
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()

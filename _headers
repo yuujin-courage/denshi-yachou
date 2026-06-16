@@ -1,0 +1,8 @@
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Service-Worker-Allowed: /
+
+/sw.js
+  Cache-Control: no-cache
+  Content-Type: application/javascript
