@@ -31,7 +31,6 @@
       font-size: 0.8rem;
       color: var(--gray-600);
     }
-    .export-card .btn { white-space: nowrap; }
     .loading-overlay {
       display: none;
       position: fixed;
@@ -54,21 +53,107 @@
       animation: spin 0.8s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* PDF用手簿テンプレート（非表示） */
+    #pdfTemplate {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 190mm;
+      font-family: "Meiryo", "MS Gothic", "Yu Gothic", sans-serif;
+      font-size: 8pt;
+      color: #b8732f;
+      background: white;
+      padding: 8mm;
+    }
+    #pdfTemplate .title {
+      text-align: center;
+      font-size: 14pt;
+      font-weight: bold;
+      letter-spacing: 8px;
+      margin-bottom: 4mm;
+      color: #b8732f;
+    }
+    #pdfTemplate .header-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2mm;
+      margin-bottom: 2mm;
+      font-size: 7.5pt;
+    }
+    #pdfTemplate .header-row {
+      display: flex;
+      align-items: center;
+      gap: 2mm;
+      margin-bottom: 1.5mm;
+      font-size: 7.5pt;
+    }
+    #pdfTemplate .header-row .label {
+      white-space: nowrap;
+      min-width: 14mm;
+    }
+    #pdfTemplate .header-row .value {
+      border-bottom: 0.5px solid #b8732f;
+      flex: 1;
+      min-height: 4mm;
+      padding-left: 1mm;
+      color: #333;
+    }
+    #pdfTemplate .right-info {
+      text-align: right;
+      font-size: 7.5pt;
+      margin-bottom: 2mm;
+    }
+    #pdfTemplate table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid #b8732f;
+      font-size: 7.5pt;
+    }
+    #pdfTemplate table th,
+    #pdfTemplate table td {
+      border: 0.5px solid #b8732f;
+      text-align: center;
+      padding: 1mm 0.5mm;
+      color: #b8732f;
+      height: 5.8mm;
+    }
+    #pdfTemplate table td.data {
+      color: #333;
+    }
+    #pdfTemplate table td.num {
+      text-align: right;
+      padding-right: 1mm;
+      color: #333;
+    }
+    #pdfTemplate .sum-section {
+      margin-top: 0;
+    }
+    #pdfTemplate .sum-section table th,
+    #pdfTemplate .sum-section table td {
+      height: 6mm;
+    }
+    #pdfTemplate .footer {
+      margin-top: 2mm;
+      font-size: 6.5pt;
+      color: #999;
+      text-align: center;
+    }
   </style>
 
-  <!-- Excel出力ライブラリ（SheetJS） -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <!-- PDF出力ライブラリ（jsPDF + autoTable） -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
-  <!-- ローディング表示 -->
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div id="loadingMsg">PDF生成中...しばらくお待ちください</div>
+    <div id="loadingMsg">生成中...しばらくお待ちください</div>
   </div>
+
+  <!-- PDF用テンプレート（非表示） -->
+  <div id="pdfTemplate"></div>
 
   <header class="app-header">
     <div>
@@ -83,15 +168,12 @@
 
   <main class="main-content">
 
-    <!-- 現場情報サマリー -->
     <div class="form-section" id="siteSummary"></div>
 
-    <!-- 出力形式 -->
     <div class="form-section-title" style="margin-bottom:12px;">
       📂 出力形式を選択してください
     </div>
 
-    <!-- Excel -->
     <div class="export-card excel">
       <div class="icon">📊</div>
       <div class="info">
@@ -102,18 +184,16 @@
               onclick="doExport('excel')">出力</button>
     </div>
 
-    <!-- PDF -->
     <div class="export-card pdf">
       <div class="icon">📄</div>
       <div class="info">
         <h3>PDF 出力（.pdf）</h3>
-        <p>水準測量手簿レイアウトで出力<br>印刷・提出用</p>
+        <p>水準測量手簿レイアウトで出力<br>印刷・提出用（日本語対応）</p>
       </div>
       <button class="btn btn-danger"
               onclick="doExport('pdf')">出力</button>
     </div>
 
-    <!-- CSV -->
     <div class="export-card csv">
       <div class="icon">📋</div>
       <div class="info">
@@ -124,10 +204,8 @@
               onclick="doExport('csv')">出力</button>
     </div>
 
-    <!-- メッセージ -->
     <div id="exportMsg"></div>
 
-    <!-- ボタン -->
     <div class="form-row" style="margin-top:16px;">
       <a id="backBtn" href="check.html"
          class="btn btn-gray btn-full">
@@ -145,85 +223,80 @@
   <script src="../js/calc.js"></script>
   <script src="../js/export.js"></script>
   <script>
-  let siteId       = '';
-  let site         = null;
-  let measurements = [];
+  var siteId       = "";
+  var site         = null;
+  var measurements = [];
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(location.search);
-    siteId       = params.get('id') || '';
-    site         = DB.getSite(siteId);
+  document.addEventListener("DOMContentLoaded", function() {
+    var params = new URLSearchParams(location.search);
+    siteId     = params.get("id") || "";
+    site       = DB.getSite(siteId);
 
     if (!site) {
-      alert('現場データが見つかりません。');
-      location.href = '../index.html';
+      alert("現場データが見つかりません。");
+      location.href = "../index.html";
       return;
     }
 
     measurements = DB.getMeasurements(siteId);
-    document.getElementById('headerSub').textContent = site.name;
-    document.getElementById('backBtn').href =
-      `check.html?id=${siteId}`;
+    document.getElementById("headerSub").textContent = site.name;
+    document.getElementById("backBtn").href =
+      "check.html?id=" + siteId;
 
-    // 現場情報サマリー
-    document.getElementById('siteSummary').innerHTML = `
-      <div class="form-section-title">📋 出力対象現場</div>
-      <p style="font-size:0.95rem;font-weight:bold;
-                margin-bottom:6px;">${site.name}</p>
-      <p style="font-size:0.82rem;color:var(--gray-600);">
-        📍 ${site.from} → ${site.to}　
-        📅 ${site.date}　
-        👤 ${site.observer}
-      </p>
-      <p style="font-size:0.82rem;color:var(--gray-600);
-                margin-top:4px;">
-        📐 ${site.grade}　
-        🏔 BM高: ${site.bmHeight} m　
-        測点数: ${measurements.length} 点
-      </p>
-    `;
+    document.getElementById("siteSummary").innerHTML =
+      "<div class=\"form-section-title\">📋 出力対象現場</div>" +
+      "<p style=\"font-size:0.95rem;font-weight:bold;" +
+      "margin-bottom:6px;\">" + esc(site.name) + "</p>" +
+      "<p style=\"font-size:0.82rem;color:var(--gray-600);\">" +
+      "📍 " + esc(site.from) + " → " + esc(site.to) +
+      "　📅 " + esc(site.date) +
+      "　👤 " + esc(site.observer) + "</p>" +
+      "<p style=\"font-size:0.82rem;color:var(--gray-600);" +
+      "margin-top:4px;\">" +
+      "📐 " + esc(site.grade) +
+      "　🏔 BM高: " + site.bmHeight + " m" +
+      "　測点数: " + measurements.length + " 点</p>";
   });
 
-  // 出力実行
   function doExport(type) {
-    const msg     = document.getElementById('exportMsg');
-    const overlay = document.getElementById('loadingOverlay');
-    const loading = document.getElementById('loadingMsg');
+    var msg     = document.getElementById("exportMsg");
+    var overlay = document.getElementById("loadingOverlay");
+    var loading = document.getElementById("loadingMsg");
+    msg.innerHTML = "";
 
-    msg.innerHTML = '';
-
-    if (type === 'pdf') {
-      loading.textContent = 'PDF生成中...しばらくお待ちください';
-      overlay.classList.add('show');
+    if (type === "pdf") {
+      loading.textContent = "PDF生成中...しばらくお待ちください";
+      overlay.classList.add("show");
     }
 
-    setTimeout(() => {
+    setTimeout(function() {
       try {
-        if (type === 'excel') EXPORT.toExcel(site, measurements);
-        if (type === 'pdf')   EXPORT.toPDF(site, measurements);
-        if (type === 'csv')   EXPORT.toCSV(site, measurements);
+        if (type === "excel") EXPORT.toExcel(site, measurements);
+        if (type === "pdf")   EXPORT.toPDF(site, measurements);
+        if (type === "csv")   EXPORT.toCSV(site, measurements);
 
-        overlay.classList.remove('show');
-        msg.innerHTML = `
-          <div class="alert alert-success"
-               style="margin-top:12px;">
-            ✅ 出力完了！ダウンロードフォルダをご確認ください。
-          </div>`;
-        DB.addHistory(
-          '出力', site.name,
-          `${type.toUpperCase()}形式で出力しました`
-        );
+        overlay.classList.remove("show");
+        msg.innerHTML =
+          "<div class=\"alert alert-success\" style=\"margin-top:12px;\">" +
+          "✅ 出力完了！ダウンロードフォルダをご確認ください。</div>";
+        DB.addHistory("出力", site.name,
+          type.toUpperCase() + "形式で出力しました");
       } catch(e) {
-        overlay.classList.remove('show');
-        msg.innerHTML = `
-          <div class="alert alert-danger"
-               style="margin-top:12px;">
-            ⚠️ 出力に失敗しました<br>
-            <small>${e.message}</small>
-          </div>`;
+        overlay.classList.remove("show");
+        msg.innerHTML =
+          "<div class=\"alert alert-danger\" style=\"margin-top:12px;\">" +
+          "⚠️ 出力に失敗しました<br><small>" + e.message + "</small></div>";
         console.error(e);
       }
-    }, type === 'pdf' ? 100 : 0);
+    }, type === "pdf" ? 200 : 0);
+  }
+
+  function esc(str) {
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
   </script>
 

@@ -58,8 +58,7 @@ function loadSiteList(filter) {
       "<h3>" + esc(site.name) + "</h3>" +
       "<p>📍 " + esc(site.from) + " → " + esc(site.to) + "</p>" +
       "<p>📅 " + esc(site.date) + "　👤 " + esc(site.observer) + "</p>" +
-      "<span class=\"badge badge-primary\">" +
-      esc(site.grade) + "</span>" +
+      "<span class=\"badge badge-primary\">" + esc(site.grade) + "</span>" +
       "</div>" +
       "<div class=\"arrow\">›</div>" +
       "</a>";
@@ -79,16 +78,16 @@ function setupSearch() {
 
 function showLimitAlert() {
   if (document.getElementById("limitAlert")) return;
-  var alert    = document.createElement("div");
-  alert.id     = "limitAlert";
-  alert.className = "alert alert-warning";
-  alert.innerHTML =
+  var el      = document.createElement("div");
+  el.id       = "limitAlert";
+  el.className = "alert alert-warning";
+  el.innerHTML =
     "⚠️ 現場数が50件に達しました。" +
     "<a href=\"pages/master.html\" " +
     "style=\"color:inherit;font-weight:bold;\">" +
     "古い現場を削除してください</a>";
   var main = document.querySelector(".main-content");
-  if (main) main.prepend(alert);
+  if (main) main.prepend(el);
 }
 
 function esc(str) {

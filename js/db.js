@@ -57,11 +57,11 @@ var DB = {
   },
   getMaster: function(type) {
     var defaults = {
-      instruments: ["レベル型式A", "レベル型式B", "デジタルレベルC"],
-      staffs:      ["3m標尺(No.1)", "3m標尺(No.2)", "5m標尺"],
-      observers:   ["山田 太郎", "鈴木 次郎", "佐藤 三郎"],
-      weather:     ["晴", "曇", "雨", "雪", "その他"],
-      wind:        ["無風", "弱風", "強風", "その他"]
+      instruments: ["レベル型式A","レベル型式B","デジタルレベルC"],
+      staffs:      ["3m標尺(No.1)","3m標尺(No.2)","5m標尺"],
+      observers:   ["山田 太郎","鈴木 次郎","佐藤 三郎"],
+      weather:     ["晴","曇","雨","雪","その他"],
+      wind:        ["無風","弱風","強風","その他"]
     };
     try {
       var saved = localStorage.getItem("master_" + type);
