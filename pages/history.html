@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>変更履歴 - 電子野帳</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .history-item {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .history-badge {
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      font-weight: bold;
+      white-space: nowrap;
+      margin-top: 2px;
+    }
+    .badge-new    { background: #D5F5E3; color: #1E8449; }
+    .badge-edit   { background: #FDEBD0; color: #784212; }
+    .badge-delete { background: #FADBD8; color: #922B21; }
+    .badge-export { background: #EBF5FB; color: #1A5376; }
+    .badge-other  { background: var(--gray-200); color: var(--gray-600); }
+    .history-info { flex: 1; }
+    .history-info .target {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--gray-800);
+      margin-bottom: 3px;
+    }
+    .history-info .detail {
+      font-size: 0.78rem;
+      color: var(--gray-600);
+    }
+    .history-info .date {
+      font-size: 0.72rem;
+      color: var(--gray-400);
+      margin-top: 3px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div>
+      <h1>📋 変更履歴</h1>
+      <div class="header-sub">操作ログ・変更記録</div>
+    </div>
+    <a href="../index.html"
+       style="color:white;font-size:1rem;text-decoration:none;">
+      🏠 ホーム
+    </a>
+  </header>
+
+  <main class="main-content">
+
+    <!-- フィルター -->
+    <div class="search-bar" style="margin-bottom:16px;">
+      <span>🔍</span>
+      <input type="text" id="searchInput"
+             placeholder="現場名・操作内容で検索...">
+    </div>
+
+    <!-- 件数 -->
+    <div class="counter-badge" id="historyCount"></div>
+
+    <!-- 履歴一覧 -->
+    <div id="historyList"></div>
+
+  </main>
+
+  <!-- ボトムナビゲーション -->
+  <nav class="bottom-nav">
+    <a href="../index.html">
+      <span class="icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="master.html">
+      <span class="icon">⚙️</span><span>マスタ</span>
+    </a>
+    <a href="history.html" class="active">
+      <span class="icon">📋</span><span>履歴</span>
+    </a>
+    <a href="settings.html">
+      <span class="icon">🔧</span><span>設定</span>
+    </a>
+    <a href="guide.html">
+      <span class="icon">❓</span><span>ヘルプ</span>
+    </a>
+  </nav>
+
+  <script src="../js/db.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    renderHistory();
+    document.getElementById('searchInput')
+      .addEventListener('input', e => {
+        renderHistory(e.target.value.trim());
+      });
+  });
+
+  function getBadgeClass(type) {
+    switch(type) {
+      case '新規':   return 'badge-new';
+      case '編集':   return 'badge-edit';
+      case '削除':   return 'badge-delete';
+      case '出力':   return 'badge-export';
+      default:       return 'badge-other';
+    }
+  }
+
+  function renderHistory(filter = '') {
+    const history = DB.getHistory();
+    const filtered = filter
+      ? history.filter(h =>
+          h.target.includes(filter) ||
+          h.detail.includes(filter) ||
+          h.type.includes(filter)
+        )
+      : history;
+
+    document.getElementById('historyCount').innerHTML =
+      `全 <span>${filtered.length}</span> 件の操作履歴`;
+
+    const list = document.getElementById('historyList');
+    if (filtered.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>履歴がありません</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map(h => `
+      <div class="history-item">
+        <span class="history-badge ${getBadgeClass(h.type)}">
+          ${h.type}
+        </span>
+        <div class="history-info">
+          <div class="target">${h.target}</div>
+          <div class="detail">${h.detail}</div>
+          <div class="date">🕐 ${h.date}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  </script>
+
+</body>
+</html>

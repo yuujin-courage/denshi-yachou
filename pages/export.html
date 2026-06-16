@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>出力 - 電子野帳</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .export-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border-left: 5px solid;
+    }
+    .export-card.excel { border-color: var(--success); }
+    .export-card.pdf   { border-color: var(--danger);  }
+    .export-card.csv   { border-color: var(--primary-lt); }
+    .export-card .icon { font-size: 2.2rem; }
+    .export-card .info { flex: 1; }
+    .export-card .info h3 {
+      font-size: 1rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .export-card .info p {
+      font-size: 0.8rem;
+      color: var(--gray-600);
+    }
+    .export-card .btn { white-space: nowrap; }
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      color: white;
+      font-size: 1rem;
+      gap: 16px;
+    }
+    .loading-overlay.show { display: flex; }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 5px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
+  <!-- Excel出力ライブラリ（SheetJS） -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+  <!-- PDF出力ライブラリ（jsPDF + autoTable） -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- 日本語フォント（Base64） -->
+  <script src="../js/NotoSansJP.b64.js"></script>
+</head>
+<body>
+
+  <!-- ローディング表示 -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div id="loadingMsg">PDF生成中...しばらくお待ちください</div>
+  </div>
+
+  <header class="app-header">
+    <div>
+      <h1>📤 出力</h1>
+      <div class="header-sub" id="headerSub">読み込み中...</div>
+    </div>
+    <a href="../index.html"
+       style="color:white;font-size:1rem;text-decoration:none;">
+      🏠 ホーム
+    </a>
+  </header>
+
+  <main class="main-content">
+
+    <!-- 現場情報サマリー -->
+    <div class="form-section" id="siteSummary"></div>
+
+    <!-- 出力形式 -->
+    <div class="form-section-title" style="margin-bottom:12px;">
+      📂 出力形式を選択してください
+    </div>
+
+    <!-- Excel -->
+    <div class="export-card excel">
+      <div class="icon">📊</div>
+      <div class="info">
+        <h3>Excel 出力（.xlsx）</h3>
+        <p>測量データを表形式で出力<br>事務所PCでの集計・編集に対応</p>
+      </div>
+      <button class="btn btn-success"
+              onclick="doExport('excel')">出力</button>
+    </div>
+
+    <!-- PDF -->
+    <div class="export-card pdf">
+      <div class="icon">📄</div>
+      <div class="info">
+        <h3>PDF 出力（.pdf）</h3>
+        <p>水準測量手簿レイアウトで出力<br>印刷・提出用（日本語対応）</p>
+      </div>
+      <button class="btn btn-danger"
+              onclick="doExport('pdf')">出力</button>
+    </div>
+
+    <!-- CSV -->
+    <div class="export-card csv">
+      <div class="icon">📋</div>
+      <div class="info">
+        <h3>CSV 出力（.csv）</h3>
+        <p>カンマ区切りテキスト形式で出力<br>汎用データ連携に対応</p>
+      </div>
+      <button class="btn btn-primary"
+              onclick="doExport('csv')">出力</button>
+    </div>
+
+    <!-- メッセージ -->
+    <div id="exportMsg"></div>
+
+    <!-- ボタン -->
+    <div class="form-row" style="margin-top:16px;">
+      <a id="backBtn" href="check.html"
+         class="btn btn-gray btn-full">
+        ◀ 点検画面に戻る
+      </a>
+      <a href="../index.html"
+         class="btn btn-primary btn-full">
+        🏠 ホームへ
+      </a>
+    </div>
+
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/calc.js"></script>
+  <script src="../js/export.js"></script>
+  <script>
+  let siteId       = '';
+  let site         = null;
+  let measurements = [];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(location.search);
+    siteId       = params.get('id') || '';
+    site         = DB.getSite(siteId);
+
+    if (!site) {
+      alert('現場データが見つかりません。');
+      location.href = '../index.html';
+      return;
+    }
+
+    measurements = DB.getMeasurements(siteId);
+    document.getElementById('headerSub').textContent = site.name;
+    document.getElementById('backBtn').href =
+      `check.html?id=${siteId}`;
+
+    // 現場情報サマリー
+    document.getElementById('siteSummary').innerHTML = `
+      <div class="form-section-title">📋 出力対象現場</div>
+      <p style="font-size:0.95rem;font-weight:bold;
+                margin-bottom:6px;">${site.name}</p>
+      <p style="font-size:0.82rem;color:var(--gray-600);">
+        📍 ${site.from} → ${site.to}　
+        📅 ${site.date}　
+        👤 ${site.observer}
+      </p>
+      <p style="font-size:0.82rem;color:var(--gray-600);
+                margin-top:4px;">
+        📐 ${site.grade}　
+        🏔 BM高: ${site.bmHeight} m　
+        測点数: ${measurements.length} 点
+      </p>
+    `;
+  });
+
+  // ══════════════════════════════════════
+  // 出力実行
+  // ══════════════════════════════════════
+  function doExport(type) {
+    const msg     = document.getElementById('exportMsg');
+    const overlay = document.getElementById('loadingOverlay');
+    const loading = document.getElementById('loadingMsg');
+
+    msg.innerHTML = '';
+
+    // PDF は生成に時間がかかるのでローディング表示
+    if (type === 'pdf') {
+      loading.textContent = 'PDF生成中...しばらくお待ちください';
+      overlay.classList.add('show');
+    }
+
+    // 少し待ってから実行（UIが更新されるのを待つ）
+    setTimeout(() => {
+      try {
+        if (type === 'excel') EXPORT.toExcel(site, measurements);
+        if (type === 'pdf')   EXPORT.toPDF(site, measurements);
+        if (type === 'csv')   EXPORT.toCSV(site, measurements);
+
+        overlay.classList.remove('show');
+        msg.innerHTML = `
+          <div class="alert alert-success" style="margin-top:12px;">
+            ✅ 出力完了！ダウンロードフォルダをご確認ください。
+          </div>`;
+        DB.addHistory(
+          '出力', site.name,
+          `${type.toUpperCase()}形式で出力しました`
+        );
+      } catch(e) {
+        overlay.classList.remove('show');
+        msg.innerHTML = `
+          <div class="alert alert-danger" style="margin-top:12px;">
+            ⚠️ 出力に失敗しました<br>
+            <small>${e.message}</small>
+          </div>`;
+        console.error(e);
+      }
+    }, type === 'pdf' ? 100 : 0);
+  }
+  </script>
+
+</body>
+</html>

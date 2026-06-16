@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>操作ガイド - 電子野帳</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .guide-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      border-left: 5px solid;
+    }
+    .guide-card .step-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: white;
+      flex-shrink: 0;
+    }
+    .guide-card .step-content h3 {
+      font-size: 1rem;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .guide-card .step-content p {
+      font-size: 0.85rem;
+      color: var(--gray-600);
+      line-height: 1.6;
+    }
+    .guide-card .step-content .tip {
+      margin-top: 8px;
+      background: var(--gray-200);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 0.8rem;
+      color: var(--gray-800);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div>
+      <h1>📖 操作ガイド</h1>
+      <div class="header-sub">アプリの基本操作</div>
+    </div>
+    <a href="../index.html"
+       style="color:white;font-size:1rem;text-decoration:none;">
+      🏠 ホーム
+    </a>
+  </header>
+
+  <main class="main-content">
+
+    <p style="font-size:0.85rem;color:var(--gray-600);
+              margin-bottom:16px;">
+      電子野帳アプリの基本的な使い方を説明します。
+    </p>
+
+    <!-- Step 1 -->
+    <div class="guide-card" style="border-color:#3498DB;">
+      <div class="step-circle" style="background:#3498DB;">1</div>
+      <div class="step-content">
+        <h3>📋 現場を作成する</h3>
+        <p>
+          ホーム画面右下の <strong>「＋」ボタン</strong> をタップして、
+          新規現場作成画面を開きます。<br>
+          工事名・自至（標石区間）・日付・天候・器械・観測者・
+          測量等級・BM高を入力して「保存して入力へ」をタップします。
+        </p>
+        <div class="tip">
+          💡 器械・標尺・観測者はマスタ管理画面で事前に登録しておくと
+          選択するだけで入力できます。
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="guide-card" style="border-color:#27AE60;">
+      <div class="step-circle" style="background:#27AE60;">2</div>
+      <div class="step-content">
+        <h3>📝 測量データを入力する</h3>
+        <p>
+          測点ごとに <strong>後視（BS）・前視（FS）</strong> を入力します。<br>
+          器械高（IH）・地盤高（GH）・高低差は
+          <strong>自動で計算</strong> されます。<br>
+          Enterキーで次のセルに移動できます。
+          行が足りなくなったら「＋ 行追加」ボタンで追加します。
+        </p>
+        <div class="tip">
+          💡 転点（TP）では後視と前視の両方を入力します。
+          BM→TP間で後視のみ、TP以降では前視のみ入力する測点は
+          中間点として扱われます。
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="guide-card" style="border-color:#E67E22;">
+      <div class="step-circle" style="background:#E67E22;">3</div>
+      <div class="step-content">
+        <h3>🔍 点検計算をする</h3>
+        <p>
+          「🔍 点検計算」ボタンをタップすると、
+          <strong>ΣBS－ΣFS＝Σ高低差</strong> の整合性を確認します。<br>
+          「📊 集計・出力へ」ボタンで点検・集計画面に進み、
+          路線長と実測閉合差を入力すると
+          <strong>許容誤差チェック</strong> も行えます。
+        </p>
+        <div class="tip">
+          💡 点検計算が「不一致」の場合は入力値を見直してください。
+          特にBSとFSの入力欄を間違えていないか確認しましょう。
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="guide-card" style="border-color:#8E44AD;">
+      <div class="step-circle" style="background:#8E44AD;">4</div>
+      <div class="step-content">
+        <h3>📤 データを出力する</h3>
+        <p>
+          出力画面では <strong>Excel・PDF・CSV</strong> の
+          3形式で出力できます。<br>
+          PDFは水準測量手簿の様式で出力されます。<br>
+          Excelは事務所PCでの集計・編集に対応しています。
+        </p>
+        <div class="tip">
+          💡 出力したファイルはダウンロードフォルダに保存されます。
+          出力後はメールやクラウドで共有できます。
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="guide-card" style="border-color:#1A5376;">
+      <div class="step-circle" style="background:#1A5376;">5</div>
+      <div class="step-content">
+        <h3>⚙️ マスタ・設定を管理する</h3>
+        <p>
+          ボトムナビの「マスタ」から器械・標尺・観測者などを
+          事前登録できます。<br>
+          「設定」からテーマ（ライト・ダーク）や
+          文字サイズを変更できます。<br>
+          「履歴」から全操作のログを確認できます。
+        </p>
+        <div class="tip">
+          💡 現場数が50件を超えると警告が表示されます。
+          不要な現場データは削除して管理してください。
+        </div>
+      </div>
+    </div>
+
+    <!-- チュートリアルへ -->
+    <a href="tutorial.html"
+       class="btn btn-success btn-full btn-lg"
+       style="margin-top:8px;">
+      🎓 水準測量チュートリアルへ ›
+    </a>
+
+  </main>
+
+  <!-- ボトムナビゲーション -->
+  <nav class="bottom-nav">
+    <a href="../index.html">
+      <span class="icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="master.html">
+      <span class="icon">⚙️</span><span>マスタ</span>
+    </a>
+    <a href="history.html">
+      <span class="icon">📋</span><span>履歴</span>
+    </a>
+    <a href="settings.html">
+      <span class="icon">🔧</span><span>設定</span>
+    </a>
+    <a href="guide.html" class="active">
+      <span class="icon">❓</span><span>ヘルプ</span>
+    </a>
+  </nav>
+
+</body>
+</html>

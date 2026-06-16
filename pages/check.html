@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>点検・集計 - 電子野帳</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .result-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .result-card .label { font-size: 0.85rem; color: var(--gray-600); }
+    .result-card .value { font-size: 1.1rem; font-weight: bold; }
+    .value-bs     { color: var(--primary); }
+    .value-fs     { color: var(--primary-lt); }
+    .value-plus   { color: var(--success); }
+    .value-minus  { color: var(--danger); }
+    .value-diff   { color: var(--warning); }
+    .check-result {
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: bold;
+      margin-bottom: 16px;
+    }
+    .tolerance-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 0.9rem;
+    }
+    .tolerance-row:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div>
+      <h1>📊 点検・集計</h1>
+      <div class="header-sub" id="headerSub">読み込み中...</div>
+    </div>
+    <a href="../index.html"
+       style="color:white;font-size:1rem;text-decoration:none;">
+      🏠 ホーム
+    </a>
+  </header>
+
+  <main class="main-content">
+
+    <!-- 集計結果 -->
+    <div class="form-section">
+      <div class="form-section-title">📊 集計結果</div>
+      <div id="sumCards"></div>
+    </div>
+
+    <!-- 点検計算結果 -->
+    <div class="form-section">
+      <div class="form-section-title">✅ 点検計算</div>
+      <div id="checkResult"></div>
+    </div>
+
+    <!-- 許容誤差チェック -->
+    <div class="form-section">
+      <div class="form-section-title">📐 許容誤差チェック</div>
+
+      <div class="form-row" style="margin-bottom:12px;">
+        <div class="form-group">
+          <label>路線長 S（km）</label>
+          <input type="number" id="routeLength" step="0.01"
+                 inputmode="decimal" placeholder="例: 1.25"
+                 onchange="runToleranceCheck()">
+        </div>
+        <div class="form-group">
+          <label>実測閉合差（mm）</label>
+          <input type="number" id="closingError" step="0.01"
+                 inputmode="decimal" placeholder="例: 3.5"
+                 onchange="runToleranceCheck()">
+        </div>
+      </div>
+      <div id="toleranceResult"></div>
+    </div>
+
+    <!-- ボタン -->
+    <div class="form-row" style="margin-top:8px;">
+      <a id="backBtn" href="input.html"
+         class="btn btn-gray btn-full">
+        ◀ 入力に戻る
+      </a>
+      <a id="toExportBtn" href="export.html"
+         class="btn btn-success btn-full btn-lg">
+        出力画面へ ›
+      </a>
+    </div>
+
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/calc.js"></script>
+  <script>
+  let siteId = '';
+  let site   = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(location.search);
+    siteId = params.get('id') || '';
+    site   = DB.getSite(siteId);
+
+    if (!site) {
+      alert('現場データが見つかりません。');
+      location.href = '../index.html';
+      return;
+    }
+
+    document.getElementById('headerSub').textContent = site.name;
+    document.getElementById('backBtn').href     = `input.html?id=${siteId}`;
+    document.getElementById('toExportBtn').href = `export.html?id=${siteId}`;
+
+    const measurements = DB.getMeasurements(siteId);
+    const computed     = CALC.compute(measurements, site.bmHeight);
+    const check        = CALC.check(computed);
+
+    // 集計カード
+    document.getElementById('sumCards').innerHTML = `
+      <div class="result-card">
+        <div class="label">Σ 後視（BS）</div>
+        <div class="value value-bs">${CALC.fmt(check.sumBS)} m</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Σ 前視（FS）</div>
+        <div class="value value-fs">${CALC.fmt(check.sumFS)} m</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Σ 高低差（＋）</div>
+        <div class="value value-plus">＋${CALC.fmt(check.sumPlus)} m</div>
+      </div>
+      <div class="result-card">
+        <div class="label">Σ 高低差（－）</div>
+        <div class="value value-minus">－${CALC.fmt(check.sumMinus)} m</div>
+      </div>
+      <div class="result-card">
+        <div class="label">差（ΣBS－ΣFS）</div>
+        <div class="value value-diff">${CALC.fmt(check.diffBSFS)} m</div>
+      </div>
+    `;
+
+    // 点検計算結果
+    document.getElementById('checkResult').innerHTML = check.isOK
+      ? `<div class="check-result alert alert-success">
+           ✅ 点検計算 OK<br>
+           <small>ΣBS－ΣFS = Σ高低差 が一致しています</small>
+         </div>`
+      : `<div class="check-result alert alert-danger">
+           ⚠️ 点検計算 不一致！<br>
+           <small>ΣBS－ΣFS=${CALC.fmt(check.diffBSFS)}  Σ高低差=${CALC.fmt(check.sumPlus - check.sumMinus)}</small><br>
+           <small>入力値を確認してください</small>
+         </div>`;
+  });
+
+  // 許容誤差チェック
+  function runToleranceCheck() {
+    const s   = parseFloat(document.getElementById('routeLength').value);
+    const err = parseFloat(document.getElementById('closingError').value);
+    const el  = document.getElementById('toleranceResult');
+
+    if (isNaN(s) || isNaN(err)) {
+      el.innerHTML = '';
+      return;
+    }
+
+    const result = CALC.toleranceCheck(site.grade, s, err);
+
+    el.innerHTML = `
+      <div class="form-section" style="background:var(--white);">
+        <div class="tolerance-row">
+          <span>等級</span>
+          <strong>${site.grade}</strong>
+        </div>
+        <div class="tolerance-row">
+          <span>路線長 S</span>
+          <strong>${s} km</strong>
+        </div>
+        <div class="tolerance-row">
+          <span>許容誤差（±${result.k}√S mm）</span>
+          <strong>± ${result.tolerance.toFixed(2)} mm</strong>
+        </div>
+        <div class="tolerance-row">
+          <span>実測閉合差</span>
+          <strong>${err} mm</strong>
+        </div>
+      </div>
+      ${result.isOK
+        ? `<div class="alert alert-success">
+             ✅ 許容範囲内　${Math.abs(err).toFixed(2)} mm ≤ ${result.tolerance.toFixed(2)} mm
+           </div>`
+        : `<div class="alert alert-danger">
+             ⚠️ 許容誤差超過！　${Math.abs(err).toFixed(2)} mm ＞ ${result.tolerance.toFixed(2)} mm<br>
+             <small>再測量を検討してください</small>
+           </div>`}
+    `;
+  }
+  </script>
+
+</body>
+</html>

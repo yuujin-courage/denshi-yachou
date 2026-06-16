@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>設定 - 電子野帳</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .setting-item {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .setting-item h3 {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: var(--gray-800);
+      margin-bottom: 12px;
+    }
+    .theme-btns {
+      display: flex;
+      gap: 12px;
+    }
+    .theme-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 2px solid var(--gray-400);
+      background: var(--white);
+      cursor: pointer;
+      text-align: center;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .theme-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: bold;
+    }
+    .theme-btn .preview {
+      font-size: 1.5rem;
+      margin-bottom: 4px;
+    }
+    .font-size-btns {
+      display: flex;
+      gap: 10px;
+    }
+    .font-size-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius);
+      border: 2px solid var(--gray-400);
+      background: var(--white);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .font-size-btn.active {
+      border-color: var(--primary);
+      color: var(--primary);
+      font-weight: bold;
+    }
+    .app-info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--gray-200);
+      font-size: 0.88rem;
+    }
+    .app-info-row:last-child { border-bottom: none; }
+    .app-info-row .label { color: var(--gray-600); }
+    .app-info-row .value { font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div>
+      <h1>🔧 設定</h1>
+      <div class="header-sub">アプリの表示設定</div>
+    </div>
+    <a href="../index.html"
+       style="color:white;font-size:1rem;text-decoration:none;">
+      🏠 ホーム
+    </a>
+  </header>
+
+  <main class="main-content">
+
+    <!-- カラーテーマ -->
+    <div class="setting-item">
+      <h3>🎨 カラーテーマ</h3>
+      <div class="theme-btns">
+        <div class="theme-btn" id="themeLight"
+             onclick="setTheme('light')">
+          <div class="preview">☀️</div>
+          <div>ライト</div>
+        </div>
+        <div class="theme-btn" id="themeDark"
+             onclick="setTheme('dark')">
+          <div class="preview">🌙</div>
+          <div>ダーク</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 文字サイズ -->
+    <div class="setting-item">
+      <h3>🔤 文字サイズ</h3>
+      <div class="font-size-btns">
+        <div class="font-size-btn" id="fontSmall"
+             onclick="setFontSize('small')"
+             style="font-size:0.8rem;">小</div>
+        <div class="font-size-btn" id="fontMedium"
+             onclick="setFontSize('medium')"
+             style="font-size:1rem;">標準</div>
+        <div class="font-size-btn" id="fontLarge"
+             onclick="setFontSize('large')"
+             style="font-size:1.2rem;">大</div>
+      </div>
+    </div>
+
+    <!-- データ管理 -->
+    <div class="setting-item">
+      <h3>🗄️ データ管理</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-warning btn-full"
+                onclick="exportAllData()">
+          💾 全データをエクスポート（JSON）
+        </button>
+        <button class="btn btn-danger btn-full"
+                onclick="clearAllData()">
+          🗑️ 全データを削除する
+        </button>
+      </div>
+    </div>
+
+    <!-- ヘルプ -->
+    <div class="setting-item">
+      <h3>📚 ヘルプ・チュートリアル</h3>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <a href="guide.html"
+           class="btn btn-primary btn-full">
+          📖 操作ガイドを見る
+        </a>
+        <a href="tutorial.html"
+           class="btn btn-success btn-full">
+          🎓 水準測量チュートリアルを見る
+        </a>
+      </div>
+    </div>
+
+    <!-- アプリ情報 -->
+    <div class="setting-item">
+      <h3>ℹ️ アプリ情報</h3>
+      <div class="app-info-row">
+        <span class="label">バージョン</span>
+        <span class="value">v1.0.0</span>
+      </div>
+      <div class="app-info-row">
+        <span class="label">対象業務</span>
+        <span class="value">土木測量 / 水準測量</span>
+      </div>
+      <div class="app-info-row">
+        <span class="label">データ保存</span>
+        <span class="value">端末内（オフライン対応）</span>
+      </div>
+    </div>
+
+    <!-- メッセージ -->
+    <div id="settingMsg"></div>
+
+  </main>
+
+  <!-- ボトムナビゲーション -->
+  <nav class="bottom-nav">
+    <a href="../index.html">
+      <span class="icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="master.html">
+      <span class="icon">⚙️</span><span>マスタ</span>
+    </a>
+    <a href="history.html">
+      <span class="icon">📋</span><span>履歴</span>
+    </a>
+    <a href="settings.html" class="active">
+      <span class="icon">🔧</span><span>設定</span>
+    </a>
+    <a href="guide.html">
+      <span class="icon">❓</span><span>ヘルプ</span>
+    </a>
+  </nav>
+
+  <script src="../js/db.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    applySettings();
+    updateButtons();
+  });
+
+  function applySettings() {
+    const s = DB.getSettings();
+    // テーマ
+    document.body.classList.toggle('dark', s.theme === 'dark');
+    // フォントサイズ
+    const sizes = { small:'14px', medium:'16px', large:'19px' };
+    document.documentElement.style.setProperty(
+      '--font-size', sizes[s.fontSize] || '16px'
+    );
+  }
+
+  function updateButtons() {
+    const s = DB.getSettings();
+    document.getElementById('themeLight')
+      .classList.toggle('active', s.theme === 'light');
+    document.getElementById('themeDark')
+      .classList.toggle('active', s.theme === 'dark');
+    document.getElementById('fontSmall')
+      .classList.toggle('active', s.fontSize === 'small');
+    document.getElementById('fontMedium')
+      .classList.toggle('active', s.fontSize === 'medium');
+    document.getElementById('fontLarge')
+      .classList.toggle('active', s.fontSize === 'large');
+  }
+
+  function setTheme(theme) {
+    const s = DB.getSettings();
+    s.theme = theme;
+    DB.saveSettings(s);
+    applySettings();
+    updateButtons();
+    showMsg('✅ テーマを変更しました', 'success');
+  }
+
+  function setFontSize(size) {
+    const s = DB.getSettings();
+    s.fontSize = size;
+    DB.saveSettings(s);
+    applySettings();
+    updateButtons();
+    showMsg('✅ 文字サイズを変更しました', 'success');
+  }
+
+  function exportAllData() {
+    const data = {
+      sites:    DB.getSites(),
+      history:  DB.getHistory(),
+      settings: DB.getSettings(),
+      exported: new Date().toISOString(),
+    };
+    const blob = new Blob(
+      [JSON.stringify(data, null, 2)],
+      { type: 'application/json' }
+    );
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = `電子野帳バックアップ_${new Date().toLocaleDateString('ja-JP').replace(/\//g,'-')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showMsg('✅ データをエクスポートしました', 'success');
+  }
+
+  function clearAllData() {
+    if (!confirm(
+      '⚠️ 全ての現場データ・履歴を削除します。\nこの操作は取り消せません。\n本当に削除しますか？'
+    )) return;
+    if (!confirm('最終確認：本当に削除しますか？')) return;
+    localStorage.clear();
+    showMsg('🗑️ 全データを削除しました', 'danger');
+    setTimeout(() => location.href = '../index.html', 1500);
+  }
+
+  function showMsg(msg, type) {
+    document.getElementById('settingMsg').innerHTML = `
+      <div class="alert alert-${type}"
+           style="margin-top:12px;">${msg}</div>`;
+  }
+  </script>
+
+</body>
+</html>

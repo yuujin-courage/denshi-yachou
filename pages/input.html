@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>データ入力 - 電子野帳</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .site-info-bar {
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .input-table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      margin-bottom: 16px;
+    }
+    .input-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--white);
+      font-size: 0.82rem;
+      min-width: 580px;
+    }
+    .input-table thead tr { background: var(--primary); color: white; }
+    .input-table thead th {
+      padding: 10px 6px;
+      text-align: center;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+    .input-table tbody tr:nth-child(even) { background: #EBF5FB; }
+    .input-table tbody tr.active-row { background: #FEF9E7 !important; }
+    .input-table tbody td {
+      padding: 4px 4px;
+      text-align: center;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .input-table tfoot tr { background: #D5F5E3; font-weight: bold; }
+    .input-table tfoot td { padding: 10px 6px; text-align: center; }
+    .input-table input {
+      width: 100%;
+      border: 1px solid var(--gray-400);
+      border-radius: 6px;
+      padding: 6px 4px;
+      font-size: 0.82rem;
+      text-align: center;
+      background: white;
+      outline: none;
+      min-width: 60px;
+    }
+    .input-table input:focus { border-color: var(--primary-lt); background: #EBF5FB; }
+    .input-table .calc-cell { font-weight: bold; font-size: 0.82rem; }
+    .input-table .point-input { min-width: 75px; }
+    .input-table .note-input  { min-width: 75px; }
+    .del-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .action-bar .btn {
+      flex: 1;
+      min-width: 100px;
+      font-size: 0.85rem;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div>
+      <h1>📝 測量データ入力</h1>
+      <div class="header-sub" id="headerSub">読み込み中...</div>
+    </div>
+    <a href="../index.html"
+       style="color:white;font-size:1rem;text-decoration:none;white-space:nowrap;">
+      🏠 ホーム
+    </a>
+  </header>
+
+  <div class="site-info-bar" id="siteInfoBar"></div>
+
+  <main class="main-content">
+
+    <div id="alertArea"></div>
+
+    <div class="input-table-wrap">
+      <table class="input-table" id="inputTable">
+        <thead>
+          <tr>
+            <th>測点</th>
+            <th>BS<br>(後視)</th>
+            <th>FS<br>(前視)</th>
+            <th>IH<br>(器械高)</th>
+            <th>GH<br>(地盤高)</th>
+            <th>高低差<br>(＋)</th>
+            <th>高低差<br>(－)</th>
+            <th>摘要</th>
+            <th>削除</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+        <tfoot id="tableFoot"></tfoot>
+      </table>
+    </div>
+
+    <div class="action-bar">
+      <button class="btn btn-primary" onclick="addRow()">＋ 行追加</button>
+      <button class="btn btn-warning" onclick="checkCalc()">🔍 点検計算</button>
+      <a href="check.html" class="btn btn-success"
+         onclick="saveBeforeLeave(event,'check.html')">
+        📊 集計・出力へ ›
+      </a>
+    </div>
+
+    <div style="margin-top:8px;">
+      <a id="editSiteBtn" href="#"
+         class="btn btn-gray btn-full"
+         style="font-size:0.85rem;">
+        ⚙️ 現場情報を編集する
+      </a>
+    </div>
+
+  </main>
+
+  <script src="../js/db.js"></script>
+  <script src="../js/calc.js"></script>
+  <script>
+  let siteId = '';
+  let site   = null;
+  let rows   = [];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(location.search);
+    siteId = params.get('id') || '';
+    site   = DB.getSite(siteId);
+
+    if (!site) {
+      alert('現場データが見つかりません。');
+      location.href = '../index.html';
+      return;
+    }
+
+    document.getElementById('headerSub').textContent = site.name;
+    document.getElementById('siteInfoBar').innerHTML = `
+      <span>📍 ${site.from} → ${site.to}</span>
+      <span>📅 ${site.date}</span>
+      <span>👤 ${site.observer}</span>
+      <span>📐 ${site.grade}</span>
+      <span>🏔 BM高: ${site.bmHeight} m</span>
+    `;
+    document.getElementById('editSiteBtn').href = `create.html?id=${siteId}`;
+
+    const saved = DB.getMeasurements(siteId);
+    rows = saved.length > 0 ? saved : [];
+    if (rows.length === 0) addRow(true);
+    else renderTable();
+  });
+
+  // ══════════════════════════════════════
+  // テーブル描画
+  // ══════════════════════════════════════
+  function renderTable() {
+    const computed = CALC.compute(rows, site.bmHeight);
+    const check    = CALC.check(computed);
+
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = computed.map((row, i) => {
+      const diffPlus  = (row.diff !== null && row.diff >= 0)
+                        ? CALC.fmt(row.diff) : '';
+      const diffMinus = (row.diff !== null && row.diff < 0)
+                        ? CALC.fmt(Math.abs(row.diff)) : '';
+      return `
+        <tr id="row_${i}">
+          <td>
+            <input class="point-input" type="text"
+              value="${row.point || ''}"
+              placeholder="No.${i+1}"
+              onchange="updateCell(${i},'point',this.value)">
+          </td>
+          <td>
+            <input type="number" step="0.001" inputmode="decimal"
+              value="${row.bs !== null && row.bs !== '' ? row.bs : ''}"
+              placeholder="0.000"
+              onfocus="setActiveRow(${i})"
+              onchange="updateCell(${i},'bs',this.value)"
+              onkeydown="handleEnter(event,${i},'bs')">
+          </td>
+          <td>
+            <input type="number" step="0.001" inputmode="decimal"
+              value="${row.fs !== null && row.fs !== '' ? row.fs : ''}"
+              placeholder="0.000"
+              onfocus="setActiveRow(${i})"
+              onchange="updateCell(${i},'fs',this.value)"
+              onkeydown="handleEnter(event,${i},'fs')">
+          </td>
+          <td class="calc-cell" style="color:var(--primary)">
+            ${CALC.fmt(row.ih)}
+          </td>
+          <td class="calc-cell" style="color:var(--primary)">
+            ${CALC.fmt(row.gh)}
+          </td>
+          <td class="calc-cell" style="color:var(--success)">
+            ${diffPlus}
+          </td>
+          <td class="calc-cell" style="color:var(--danger)">
+            ${diffMinus}
+          </td>
+          <td>
+            <input class="note-input" type="text"
+              value="${row.note || ''}"
+              placeholder="摘要"
+              onchange="updateCell(${i},'note',this.value)">
+          </td>
+          <td>
+            <button class="del-btn" onclick="deleteRow(${i})"
+              title="この行を削除">🗑</button>
+          </td>
+        </tr>`;
+    }).join('');
+
+    document.getElementById('tableFoot').innerHTML = `
+      <tr>
+        <td>合計</td>
+        <td>${CALC.fmt(check.sumBS)}</td>
+        <td>${CALC.fmt(check.sumFS)}</td>
+        <td>-</td>
+        <td>-</td>
+        <td style="color:var(--success)">＋${CALC.fmt(check.sumPlus)}</td>
+        <td style="color:var(--danger)">－${CALC.fmt(check.sumMinus)}</td>
+        <td colspan="2">
+          差:${CALC.fmt(check.diffBSFS)}
+          ${check.isOK
+            ? '<span style="color:var(--success)"> ✅OK</span>'
+            : '<span style="color:var(--danger)"> ⚠️不一致</span>'}
+        </td>
+      </tr>
+    `;
+  }
+
+  // ══════════════════════════════════════
+  // セル更新
+  // ══════════════════════════════════════
+  function updateCell(index, field, value) {
+    if (!rows[index]) return;
+    rows[index][field] = value;
+    saveData();
+    renderTable();
+  }
+
+  function setActiveRow(index) {
+    document.querySelectorAll('.input-table tbody tr')
+      .forEach(tr => tr.classList.remove('active-row'));
+    const row = document.getElementById(`row_${index}`);
+    if (row) row.classList.add('active-row');
+  }
+
+  function handleEnter(event, rowIndex, field) {
+    if (event.key !== 'Enter') return;
+    const order = ['bs', 'fs'];
+    const next  = order[order.indexOf(field) + 1];
+    if (next) {
+      const sel = `#row_${rowIndex} input[onkeydown*="'${next}'"]`;
+      const el  = document.querySelector(sel);
+      if (el) { el.focus(); return; }
+    }
+    const nextRow = document.querySelector(
+      `#row_${rowIndex + 1} input[onkeydown*="'bs'"]`
+    );
+    if (nextRow) nextRow.focus();
+    else addRow();
+  }
+
+  // ══════════════════════════════════════
+  // 行操作
+  // ══════════════════════════════════════
+  function addRow(silent = false) {
+    rows.push({ point: '', bs: '', fs: '', is: '', note: '' });
+    if (!silent) saveData();
+    renderTable();
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('.point-input');
+      if (inputs.length > 0) inputs[inputs.length - 1].focus();
+    }, 50);
+  }
+
+  function deleteRow(index) {
+    if (rows.length <= 1) {
+      alert('最低1行は必要です。'); return;
+    }
+    const name = rows[index].point || `行${index + 1}`;
+    if (!confirm(`「${name}」を削除しますか？`)) return;
+    rows.splice(index, 1);
+    saveData();
+    renderTable();
+    DB.addHistory('編集', site.name, `測点「${name}」を削除しました`);
+  }
+
+  // ══════════════════════════════════════
+  // 保存
+  // ══════════════════════════════════════
+  function saveData() {
+    DB.saveMeasurements(siteId, rows);
+  }
+
+  function saveBeforeLeave(event, dest) {
+    event.preventDefault();
+    saveData();
+    location.href = dest + '?id=' + siteId;
+  }
+
+  // ══════════════════════════════════════
+  // 点検計算
+  // ══════════════════════════════════════
+  function checkCalc() {
+    const computed = CALC.compute(rows, site.bmHeight);
+    const check    = CALC.check(computed);
+    const area     = document.getElementById('alertArea');
+
+    if (check.isOK) {
+      area.innerHTML = `
+        <div class="alert alert-success">
+          ✅ 点検計算 OK　
+          ΣBS=${CALC.fmt(check.sumBS)} /
+          ΣFS=${CALC.fmt(check.sumFS)} /
+          差=${CALC.fmt(check.diffBSFS)}
+        </div>`;
+    } else {
+      area.innerHTML = `
+        <div class="alert alert-danger">
+          ⚠️ 点検計算 不一致！
+          ΣBS-ΣFS=${CALC.fmt(check.diffBSFS)} /
+          Σ高低差=${CALC.fmt(check.sumPlus - check.sumMinus)}
+          入力値を確認してください。
+        </div>`;
+    }
+    area.scrollIntoView({ behavior: 'smooth' });
+  }
+  </script>
+
+</body>
+</html>

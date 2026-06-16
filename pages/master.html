@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>マスタ管理 - 電子野帳</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    .tab-bar {
+      display: flex;
+      background: var(--white);
+      border-bottom: 2px solid var(--gray-200);
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+    .tab-bar button {
+      flex: 1;
+      min-width: 60px;
+      padding: 12px 8px;
+      border: none;
+      background: none;
+      font-size: 0.82rem;
+      color: var(--gray-600);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-bar button.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: bold;
+    }
+    .master-item {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .master-item .item-name {
+      font-size: 0.95rem;
+      font-weight: bold;
+      color: var(--gray-800);
+    }
+    .master-item .item-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .icon-btn {
+      background: none;
+      border: 1px solid var(--gray-400);
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .icon-btn:hover { background: var(--gray-200); }
+    .icon-btn.danger {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .add-form {
+      background: var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+    .add-form .form-row {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+    .add-form .form-group { flex: 1; margin-bottom: 0; }
+  </style>
+</head>
+<body>
+
+  <header class="app-header">
+    <div>
+      <h1>⚙️ マスタ管理</h1>
+      <div class="header-sub">器械・標尺・観測者などの登録</div>
+    </div>
+    <a href="../index.html"
+       style="color:white;font-size:1rem;text-decoration:none;">
+      🏠 ホーム
+    </a>
+  </header>
+
+  <main class="main-content">
+
+    <!-- タブ -->
+    <div class="tab-bar" id="tabBar">
+      <button class="active" onclick="switchTab('instruments', this)">🔭 器械</button>
+      <button onclick="switchTab('staffs', this)">📏 標尺</button>
+      <button onclick="switchTab('observers', this)">👤 観測者</button>
+      <button onclick="switchTab('weather', this)">🌤 天候</button>
+      <button onclick="switchTab('wind', this)">💨 風</button>
+    </div>
+
+    <!-- 追加フォーム -->
+    <div class="add-form">
+      <div class="form-section-title" id="addFormTitle">
+        🔭 器械を新規登録
+      </div>
+      <div class="form-row" style="margin-top:10px;">
+        <div class="form-group">
+          <input type="text" id="newItemInput"
+                 placeholder="例：レベル型式A"
+                 maxlength="100">
+        </div>
+        <button class="btn btn-primary"
+                onclick="addItem()"
+                style="white-space:nowrap;">
+          ＋ 追加
+        </button>
+      </div>
+    </div>
+
+    <!-- メッセージ -->
+    <div id="masterMsg"></div>
+
+    <!-- 一覧 -->
+    <div class="section-label" id="listLabel">登録済み 器械 一覧</div>
+    <div id="masterList"></div>
+
+  </main>
+
+  <!-- ボトムナビゲーション -->
+  <nav class="bottom-nav">
+    <a href="../index.html">
+      <span class="icon">🏠</span><span>ホーム</span>
+    </a>
+    <a href="master.html" class="active">
+      <span class="icon">⚙️</span><span>マスタ</span>
+    </a>
+    <a href="history.html">
+      <span class="icon">📋</span><span>履歴</span>
+    </a>
+    <a href="settings.html">
+      <span class="icon">🔧</span><span>設定</span>
+    </a>
+    <a href="guide.html">
+      <span class="icon">❓</span><span>ヘルプ</span>
+    </a>
+  </nav>
+
+  <script src="../js/db.js"></script>
+  <script>
+  const TAB_LABELS = {
+    instruments: { label: '器械',   icon: '🔭', placeholder: '例：レベル型式A' },
+    staffs:      { label: '標尺',   icon: '📏', placeholder: '例：3m標尺（No.1）' },
+    observers:   { label: '観測者', icon: '👤', placeholder: '例：山田 太郎' },
+    weather:     { label: '天候',   icon: '🌤', placeholder: '例：晴' },
+    wind:        { label: '風',     icon: '💨', placeholder: '例：弱風' },
+  };
+
+  let currentType = 'instruments';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderList();
+  });
+
+  // タブ切り替え
+  function switchTab(type, btn) {
+    currentType = type;
+    document.querySelectorAll('.tab-bar button')
+      .forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const info = TAB_LABELS[type];
+    document.getElementById('addFormTitle').textContent =
+      `${info.icon} ${info.label}を新規登録`;
+    document.getElementById('newItemInput').placeholder =
+      info.placeholder;
+    document.getElementById('listLabel').textContent =
+      `登録済み ${info.label} 一覧`;
+    document.getElementById('newItemInput').value = '';
+    document.getElementById('masterMsg').innerHTML = '';
+
+    renderList();
+  }
+
+  // 一覧描画
+  function renderList() {
+    const items = DB.getMaster(currentType);
+    const list  = document.getElementById('masterList');
+
+    if (items.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📭</div>
+          <p>まだ登録されていません</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = items.map((item, i) => `
+      <div class="master-item">
+        <div class="item-name">${item}</div>
+        <div class="item-actions">
+          <button class="icon-btn"
+                  onclick="editItem(${i})">✏️ 編集</button>
+          <button class="icon-btn danger"
+                  onclick="deleteItem(${i})">🗑 削除</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // 追加
+  function addItem() {
+    const input = document.getElementById('newItemInput');
+    const val   = input.value.trim();
+    const msg   = document.getElementById('masterMsg');
+
+    if (!val) {
+      msg.innerHTML = `
+        <div class="alert alert-danger">
+          ⚠️ 名前を入力してください
+        </div>`;
+      return;
+    }
+
+    const items = DB.getMaster(currentType);
+    if (items.includes(val)) {
+      msg.innerHTML = `
+        <div class="alert alert-warning">
+          ⚠️ 同じ名前がすでに登録されています
+        </div>`;
+      return;
+    }
+
+    items.push(val);
+    DB.saveMaster(currentType, items);
+    DB.addHistory(
+      '新規',
+      TAB_LABELS[currentType].label + 'マスタ',
+      `「${val}」を登録しました`
+    );
+    input.value = '';
+    msg.innerHTML = `
+      <div class="alert alert-success">
+        ✅ 「${val}」を登録しました
+      </div>`;
+    renderList();
+  }
+
+  // 編集
+  function editItem(index) {
+    const items  = DB.getMaster(currentType);
+    const oldVal = items[index];
+    const newVal = prompt(
+      `${TAB_LABELS[currentType].label}名を編集してください`,
+      oldVal
+    );
+    if (!newVal || newVal.trim() === '') return;
+    items[index] = newVal.trim();
+    DB.saveMaster(currentType, items);
+    DB.addHistory(
+      '編集',
+      TAB_LABELS[currentType].label + 'マスタ',
+      `「${oldVal}」→「${newVal.trim()}」に変更しました`
+    );
+    document.getElementById('masterMsg').innerHTML = `
+      <div class="alert alert-success">
+        ✅ 「${newVal.trim()}」に変更しました
+      </div>`;
+    renderList();
+  }
+
+  // 削除
+  function deleteItem(index) {
+    const items = DB.getMaster(currentType);
+    const val   = items[index];
+    if (!confirm(`「${val}」を削除しますか？`)) return;
+    items.splice(index, 1);
+    DB.saveMaster(currentType, items);
+    DB.addHistory(
+      '削除',
+      TAB_LABELS[currentType].label + 'マスタ',
+      `「${val}」を削除しました`
+    );
+    document.getElementById('masterMsg').innerHTML = `
+      <div class="alert alert-success">
+        ✅ 「${val}」を削除しました
+      </div>`;
+    renderList();
+  }
+  </script>
+
+</body>
+</html>
