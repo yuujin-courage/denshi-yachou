@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+﻿document.addEventListener("DOMContentLoaded", function() {
   applySettings();
   loadSiteList();
   setupSearch();
@@ -61,7 +61,7 @@ function loadSiteList(filter) {
       "<span class=\"badge badge-primary\">" +
       esc(site.grade) + "</span>" +
       "</div>" +
-      "<div class=\"arrow\">›</div>" +
+      "<div class=\"arrow\">窶ｺ</div>" +
       "</a>";
   }
   list.innerHTML = html;
