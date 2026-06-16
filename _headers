@@ -1,8 +1,18 @@
-/*
-  X-Frame-Options: DENY
-  X-Content-Type-Options: nosniff
-  Service-Worker-Allowed: /
+/js/db.js
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
 
-/sw.js
-  Cache-Control: no-cache
-  Content-Type: application/javascript
+/js/app.js
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/js/calc.js
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/js/export.js
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/pages/*
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/*
+  Cache-Control: no-store, no-cache, must-revalidate
